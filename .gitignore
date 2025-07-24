@@ -1,0 +1,8 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/src/generated/prisma
+.next
+package.json.2374011418
+pnpm-lock.yaml.2518396296
