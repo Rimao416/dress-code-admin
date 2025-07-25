@@ -32,33 +32,39 @@ export default function AddProductPage() {
   const { data: categories = [] } = useCategories()
   const { data: subcategories = [] } = useSubCategories()
 
-  const onSubmit = async (data: ExtendedProductFormData) => {
-    setIsSubmitting(true)
-    setLoading(true)
-   
-    try {
-      // Vérifier que nous avons au moins une image uploadée
-      if (!data.imageUrls || data.imageUrls.length === 0) {
-        throw new Error('Au moins une image est requise pour le produit');
-      }
+const onSubmit = async (data: ExtendedProductFormData) => {
+  console.log('=== DÉBUT SOUMISSION ===');
+  console.log('Data reçue:', data);
+  
+  setIsSubmitting(true)
+  setLoading(true)
+ 
+  try {
+    // Vérifier que nous avons au moins une image uploadée
+    if (!data.imageUrls || data.imageUrls.length === 0) {
+      console.error('Aucune image fournie');
+      throw new Error('Au moins une image est requise pour le produit');
+    }
 
-      // Préparer les données du produit avec les URLs Cloudinary
-      const productData: CreateProductData = {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        categoryId: data.categoryId,
-        subcategoryId: data.subcategoryId,
-        stock: data.stock,
-        available: data.available,
-        variants: data.variants || [],
-        images: data.imageUrls // Utiliser les URLs Cloudinary directement
-      }
+    console.log('Images URLs:', data.imageUrls);
 
-      // Log pour debugging
-      console.log('Sending product data:', productData);
+    // Préparer les données du produit avec les URLs Cloudinary
+    const productData: CreateProductData = {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      categoryId: data.categoryId,
+      subcategoryId: data.subcategoryId,
+      stock: data.stock,
+      available: data.available,
+      variants: data.variants || [],
+      images: data.imageUrls
+    }
 
-      const newProduct = await createProduct(productData)
+    console.log('Données envoyées à l\'API:', productData);
+    
+    const newProduct = await createProduct(productData)
+    console.log('Produit créé:', newProduct);
      
       const formattedProduct: Product = {
         id: newProduct.id,
