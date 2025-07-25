@@ -1,7 +1,7 @@
 // hooks/products/useProductsByCategory.ts
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { getProductsByCategory } from '@/services/product.service';
+import { getProductsByCategory, getProductsBySubCategory } from '@/services/product.service';
 import { useProductStore } from '@/store/productStore';
 
 export const useProductsByCategory = (categoryId: string) => {

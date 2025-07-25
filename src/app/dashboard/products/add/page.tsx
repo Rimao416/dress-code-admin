@@ -1,3 +1,4 @@
+// pages/add-product/page.tsx (version mise à jour)
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -14,6 +15,11 @@ import { useCategories } from '@/hooks/categories/useCategories'
 import { createProduct } from '@/services/product.service'
 import { useSubCategories } from '@/hooks/subCategories/useSubCategories'
 
+// Interface étendue pour inclure les URLs Cloudinary
+interface ExtendedProductFormData extends ProductFormData {
+  imageUrls?: string[];
+}
+
 export default function AddProductPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -26,23 +32,17 @@ export default function AddProductPage() {
   const { data: categories = [] } = useCategories()
   const { data: subcategories = [] } = useSubCategories()
 
-  const onSubmit = async (data: ProductFormData) => {
+  const onSubmit = async (data: ExtendedProductFormData) => {
     setIsSubmitting(true)
     setLoading(true)
-    
+   
     try {
-      // Convertir les fichiers images en URLs (simulation - à adapter selon votre logique d'upload)
-      const imageUrls: string[] = [];
-      if (data.images) {
-        // Ici vous devriez uploader les images et récupérer les URLs
-        // Pour l'exemple, on simule avec des URLs temporaires
-        for (const file of data.images) {
-          const url = URL.createObjectURL(file);
-          imageUrls.push(url);
-        }
+      // Vérifier que nous avons au moins une image uploadée
+      if (!data.imageUrls || data.imageUrls.length === 0) {
+        throw new Error('Au moins une image est requise pour le produit');
       }
 
-      // Préparer les données du produit
+      // Préparer les données du produit avec les URLs Cloudinary
       const productData: CreateProductData = {
         name: data.name,
         description: data.description,
@@ -52,11 +52,14 @@ export default function AddProductPage() {
         stock: data.stock,
         available: data.available,
         variants: data.variants || [],
-        images: imageUrls
+        images: data.imageUrls // Utiliser les URLs Cloudinary directement
       }
 
+      // Log pour debugging
+      console.log('Sending product data:', productData);
+
       const newProduct = await createProduct(productData)
-      
+     
       const formattedProduct: Product = {
         id: newProduct.id,
         name: newProduct.name,
@@ -71,18 +74,19 @@ export default function AddProductPage() {
         category: newProduct.category,
         createdAt: new Date(newProduct.createdAt),
       }
-      
+     
       // Mise à jour du cache React Query
       queryClient.setQueryData<Product[]>(['products'], (old = []) => [
         ...old,
         formattedProduct,
       ])
-      
-      setMessage('Product created successfully', 'success')
+     
+      setMessage('Produit créé avec succès', 'success')
       router.push('/dashboard/products')
+      
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'An unknown error occurred'
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur inconnue s\'est produite'
+      console.error('Error creating product:', err);
       setError(errorMessage)
       setMessage(errorMessage, 'error')
     } finally {
@@ -98,7 +102,7 @@ export default function AddProductPage() {
           breadcrumb={['Produits', 'Ajouter un nouveau produit']}
           title='Gestion des produits'
         />
-        
+       
         {/* Main container with dark theme support */}
         <div className={`
           rounded-lg p-6 shadow-sm transition-all duration-300
@@ -112,10 +116,10 @@ export default function AddProductPage() {
             isSubmitting={isSubmitting}
             submitButtonText='Ajouter le produit'
             categories={categories.map(cat => ({ id: cat.id, name: cat.name }))}
-            subcategories={subcategories.map(sub => ({ 
-              id: sub.id, 
-              name: sub.name, 
-              categoryId: sub.categoryId 
+            subcategories={subcategories.map(sub => ({
+              id: sub.id,
+              name: sub.name,
+              categoryId: sub.categoryId
             }))}
           />
         </div>
