@@ -1,6 +1,5 @@
-// app/api/products/search/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@/generated/prisma'
+import { PrismaClient, Prisma } from '@/generated/prisma'
 
 const prisma = new PrismaClient()
 
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const where: any = {
+    const where: Prisma.ProductWhereInput = {
       AND: [
         {
           OR: [
@@ -35,8 +34,13 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (categoryId) where.categoryId = categoryId
-    if (available !== null) where.available = available === 'true'
+    if (categoryId) {
+      where.categoryId = categoryId
+    }
+
+    if (available !== null) {
+      where.available = available === 'true'
+    }
 
     const products = await prisma.product.findMany({
       where,

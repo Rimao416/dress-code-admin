@@ -1,4 +1,3 @@
-// app/api/subcategories/route.ts
 import { NextResponse } from 'next/server';
 import { SubCategory } from '@/types/subCategory.type';
 import prisma from '@/lib/client';
@@ -17,7 +16,7 @@ export async function GET() {
     });
 
     return NextResponse.json(subCategories);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Échec de la récupération des sous-catégories' },
       { status: 500 }
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newSubCategory, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Échec de la création de la sous-catégorie' },
       { status: 500 }

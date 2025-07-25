@@ -13,10 +13,10 @@ export const useDeleteSubCategory = () => {
     },
   });
 
-  const deleteSubCategories = (
-    idsToDelete: string | string[],
-    options?: { onSuccess?: () => void; onError?: (err: any) => void }
-  ) => {
+const deleteSubCategories = (
+  idsToDelete: string | string[],
+  options?: { onSuccess?: () => void; onError?: (err: Error) => void }
+) => {
     if (Array.isArray(idsToDelete)) {
       if (idsToDelete.length === 1) {
         return deleteSingleMutation.mutate(idsToDelete[0], options);

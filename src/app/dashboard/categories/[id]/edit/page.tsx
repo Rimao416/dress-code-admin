@@ -35,7 +35,6 @@ export default function EditCategoryPage() {
   const {
     data: category,
     isLoading,
-    error,
     status,
   } = useCategory(categoryId) // Utiliser string au lieu de Number(categoryId)
 

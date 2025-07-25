@@ -12,6 +12,7 @@ import Select from '../ui/select'
 import Button from '../ui/button'
 import { productSchema, ProductFormData } from '@/schemas/productSchema'
 import { CloudinaryService } from '@/services/cloudinary.service'
+import Image from 'next/image'
 
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>;
@@ -75,7 +76,6 @@ export default function ProductForm({
     reset,
     setValue,
     watch,
-    getValues,
     trigger
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -149,7 +149,7 @@ const uploadAllImages = async (): Promise<string[]> => {
 
   setIsUploadingImages(true);
   
-  const uploadPromises = imagesToUpload.map(async (imageState, index) => {
+const uploadPromises = imagesToUpload.map(async (imageState) => {
     const actualIndex = imageStates.findIndex(state => state === imageState);
     
     setImageStates(prev => prev.map((state, i) =>
@@ -295,8 +295,12 @@ const uploadAllImages = async (): Promise<string[]> => {
       setValue('variants', newVariants);
     }
   };
-
-  const updateVariant = (index: number, field: string, value: any) => {
+interface ProductVariant {
+  size: string;
+  color: string;
+  quantity: number;
+}
+const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
     const newVariants = [...variants];
     newVariants[index] = { ...newVariants[index], [field]: value };
     setVariants(newVariants);
@@ -304,11 +308,11 @@ const uploadAllImages = async (): Promise<string[]> => {
   };
 
   // Modifier la fonction de soumission pour inclure les URLs Cloudinary
- const handleFormSubmit: SubmitHandler<ProductFormData> = async (data: ProductFormData) => {
+const handleFormSubmit: SubmitHandler<ProductFormData> = async (data: ProductFormData) => {
   try {
     // Upload toutes les images d'abord
     const uploadedImageUrls = await uploadAllImages();
-    
+   
     if (uploadedImageUrls.length === 0) {
       alert('Veuillez ajouter au moins une image');
       return;
@@ -333,7 +337,6 @@ const uploadAllImages = async (): Promise<string[]> => {
     alert('Erreur lors de l\'upload des images. Veuillez réessayer.');
   }
 };
-
 
   // Fonction pour vérifier si on peut passer à l'étape suivante
  const canProceedToNextStep = () => {
@@ -418,105 +421,108 @@ const nextStep = async () => {
   );
 
   // Fonction pour rendre la section d'upload d'images
-  const renderImageUploadSection = () => (
-    <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-      <FormField
-        label="Images du produit"
-        htmlFor="images"
-        error={errors.images?.message}
-        required
-      >
-        <div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
-          isDarkMode
-            ? 'border-slate-600 hover:border-indigo-500 bg-slate-700/20'
-            : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50'
-        }`}>
-          <input
-            id="images"
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            className="hidden"
-            disabled={isUploadingImages}
-          />
-          <label
-            htmlFor="images"
-            className={`cursor-pointer flex flex-col items-center justify-center space-y-2 ${
-              isDarkMode ? 'text-slate-400' : 'text-slate-600'
-            } ${isUploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <Upload size={32} />
-            <span>
-              {isUploadingImages ? 'Upload en cours...' : 'Cliquez pour ajouter des images'}
-            </span>
-            <span className="text-sm">Maximum 10 images</span>
-          </label>
-        </div>
-       
-        {imageStates.length > 0 && (
-          <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-            {imageStates.map((imageState, index) => (
-              <div key={index} className={`relative group border rounded-lg overflow-hidden ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`}>
-                <img
-                  src={imageState.preview}
-                  alt={`Aperçu ${index + 1}`}
-                  className="w-full h-24 object-cover"
-                />
-               
-                {/* Overlay de statut */}
-                {imageState.uploading && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="text-white text-center">
-                      <Loader2 size={20} className="animate-spin mx-auto mb-1" />
-                      <div className="text-xs">{imageState.progress}%</div>
-                    </div>
+const renderImageUploadSection = () => (
+  <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+    <FormField
+      label="Images du produit"
+      htmlFor="images"
+      // Supprime cette ligne qui cause l'erreur : error={errors.images?.message}
+      required
+    >
+      <div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
+        isDarkMode
+          ? 'border-slate-600 hover:border-indigo-500 bg-slate-700/20'
+          : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50'
+      }`}>
+        <input
+          id="images"
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageChange}
+          className="hidden"
+          disabled={isUploadingImages}
+        />
+        <label
+          htmlFor="images"
+          className={`cursor-pointer flex flex-col items-center justify-center space-y-2 ${
+            isDarkMode ? 'text-slate-400' : 'text-slate-600'
+          } ${isUploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <Upload size={32} />
+          <span>
+            {isUploadingImages ? 'Upload en cours...' : 'Cliquez pour ajouter des images'}
+          </span>
+          <span className="text-sm">Maximum 10 images</span>
+        </label>
+      </div>
+     
+      {imageStates.length > 0 && (
+        <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+          {imageStates.map((imageState, index) => (
+            <div key={index} className={`relative group border rounded-lg overflow-hidden ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`}>
+           <Image
+  src={imageState.preview}
+  alt={`Aperçu ${index + 1}`}
+  width={96}
+  height={96}
+  className="w-full h-24 object-cover"
+  unoptimized={imageState.preview.startsWith('blob:')}
+/>
+             
+              {/* Overlay de statut */}
+              {imageState.uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div className="text-white text-center">
+                    <Loader2 size={20} className="animate-spin mx-auto mb-1" />
+                    <div className="text-xs">{imageState.progress}%</div>
                   </div>
-                )}
-               
-                {imageState.error && (
-                  <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
-                    <button
-                      onClick={() => retryImageUpload(index)}
-                      className="text-white text-xs bg-white/20 px-2 py-1 rounded"
-                    >
-                      Réessayer
-                    </button>
-                  </div>
-                )}
-               
-                {imageState.uploaded && (
-                  <div className="absolute top-1 left-1 bg-green-500 text-white rounded-full p-1">
-                    <Check size={10} />
-                  </div>
-                )}
-               
-                {/* Bouton de suppression */}
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  disabled={imageState.uploading}
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-       
-        {/* Barre de progression globale */}
-        {isUploadingImages && (
-          <div className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-            <div className="flex items-center space-x-2">
-              <Loader2 size={16} className="animate-spin" />
-              <span className="text-sm">Upload des images en cours...</span>
+                </div>
+              )}
+             
+              {imageState.error && (
+                <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
+                  <button
+                    onClick={() => retryImageUpload(index)}
+                    className="text-white text-xs bg-white/20 px-2 py-1 rounded"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
+             
+              {imageState.uploaded && (
+                <div className="absolute top-1 left-1 bg-green-500 text-white rounded-full p-1">
+                  <Check size={10} />
+                </div>
+              )}
+             
+              {/* Bouton de suppression */}
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                disabled={imageState.uploading}
+              >
+                <X size={14} />
+              </button>
             </div>
+          ))}
+        </div>
+      )}
+     
+      {/* Barre de progression globale */}
+      {isUploadingImages && (
+        <div className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+          <div className="flex items-center space-x-2">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-sm">Upload des images en cours...</span>
           </div>
-        )}
-      </FormField>
-    </div>
-  );
+        </div>
+      )}
+    </FormField>
+  </div>
+);
 
   const renderStep1 = () => (
     <div className="space-y-6">

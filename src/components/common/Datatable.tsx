@@ -1,7 +1,7 @@
 "use client";
 import { useRef } from 'react';
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, X, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, X } from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -16,7 +16,6 @@ import {
   Cell
 } from '@tanstack/react-table';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMessages } from '@/context/useMessage';
 import { useTheme } from '@/context/ThemeContext';
 
 const isClickableElement = (element: HTMLElement): boolean => {
@@ -35,7 +34,7 @@ const isClickableElement = (element: HTMLElement): boolean => {
   });
 };
 
-export interface FilterOption<T> {
+export interface FilterOption {
   label: string;
   columnId: string;
   options?: Array<{
@@ -61,7 +60,7 @@ export interface DataTableProps<T> {
  onEdit?: (id: string) => void;        // ✅ Changé de number à string
   onDelete?: (id: string) => void;      // ✅ Changé de number à string
   onViewDetails?: (item: T) => void;
-  filterOptions?: FilterOption<T>[];
+  filterOptions?: FilterOption[];
   keyExtractor: (item: T) => string;    // ✅ Changé de number à string
   readOnly?: boolean;
 }
@@ -110,8 +109,6 @@ export function DataTable<T extends object>({
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const { setMessage } = useMessages();
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -282,7 +279,7 @@ export function DataTable<T extends object>({
   };
  
   // Render a single filter based on its type
-  const renderFilter = (filter: FilterOption<T>) => {
+  const renderFilter = (filter: FilterOption) => {
     const inputClasses = `w-full py-2 pl-3 pr-10 border rounded-md appearance-none text-sm disabled:opacity-50 transition-colors ${
       isDarkMode 
         ? 'bg-slate-800 border-slate-600 text-slate-100 focus:border-blue-400' 

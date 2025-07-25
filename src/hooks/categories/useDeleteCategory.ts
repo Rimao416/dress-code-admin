@@ -15,10 +15,10 @@ export const useDeleteCategory = () => {
   });
 
   // Fonction unifiée pour supprimer un ou plusieurs éléments
-  const deleteCategories = (
-    idsToDelete: string | string[],
-    options?: { onSuccess?: () => void; onError?: (err: any) => void }
-  ) => {
+const deleteCategories = (
+  idsToDelete: string | string[],
+  options?: { onSuccess?: () => void; onError?: (err: Error) => void }
+) => {
     if (Array.isArray(idsToDelete)) {
       if (idsToDelete.length === 1) {
         return deleteSingleMutation.mutate(idsToDelete[0], options);

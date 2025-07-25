@@ -1,19 +1,20 @@
-// app/api/products/[id]/variants/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@/generated/prisma'
 import { variantSchema } from '@/schemas/productSchema'
-import { z } from 'zod'
+import { ZodError } from 'zod'
 
 const prisma = new PrismaClient()
 
 // GET /api/products/[id]/variants - Récupérer les variantes d'un produit
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     const variants = await prisma.variant.findMany({
-      where: { productId: params.id }
+      where: { productId: id }
     })
 
     return NextResponse.json(variants)
@@ -29,17 +30,16 @@ export async function GET(
 // POST /api/products/[id]/variants - Ajouter une variante à un produit
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     const body = await request.json()
-    
-    // Validation des données
     const validatedData = variantSchema.parse(body)
 
-    // Vérifier que le produit existe
     const productExists = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!productExists) {
@@ -49,10 +49,9 @@ export async function POST(
       )
     }
 
-    // Créer la variante
     const variant = await prisma.variant.create({
       data: {
-        productId: params.id,
+        productId: id,
         size: validatedData.size,
         color: validatedData.color,
         quantity: validatedData.quantity
@@ -61,9 +60,9 @@ export async function POST(
 
     return NextResponse.json(variant, { status: 201 })
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Données invalides', details: error.errors },
+        { error: 'Données invalides', details: error.issues },
         { status: 400 }
       )
     }

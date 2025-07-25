@@ -1,14 +1,16 @@
-// app/api/subcategories/[id]/route.ts
-import prisma from '@/lib/client';
-import { NextResponse } from 'next/server';
+import prisma from '@/lib/client'
+import { NextResponse } from 'next/server'
+import { Prisma } from '@/generated/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     const subCategory = await prisma.subCategory.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         category: {
           select: {
@@ -17,33 +19,34 @@ export async function GET(
           },
         },
       },
-    });
+    })
 
     if (!subCategory) {
       return NextResponse.json(
         { error: 'Sous-catégorie non trouvée' },
         { status: 404 }
-      );
+      )
     }
 
-    return NextResponse.json(subCategory);
-  } catch (error) {
+    return NextResponse.json(subCategory)
+  } catch {
     return NextResponse.json(
       { error: 'Échec de la récupération de la sous-catégorie' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const data = await request.json();
+    const { id } = await params
+    const data = await request.json()
 
     const updatedSubCategory = await prisma.subCategory.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: data.name,
         categoryId: data.categoryId,
@@ -56,31 +59,51 @@ export async function PUT(
           },
         },
       },
-    });
+    })
 
-    return NextResponse.json(updatedSubCategory);
+    return NextResponse.json(updatedSubCategory)
   } catch (error) {
+    const err = error as Prisma.PrismaClientKnownRequestError
+
+    if (err.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Sous-catégorie non trouvée' },
+        { status: 404 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Échec de la mise à jour de la sous-catégorie' },
       { status: 500 }
-    );
+    )
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await prisma.subCategory.delete({
-      where: { id: params.id },
-    });
+    const { id } = await params
 
-    return new NextResponse(null, { status: 204 });
+    await prisma.subCategory.delete({
+      where: { id },
+    })
+
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
+    const err = error as Prisma.PrismaClientKnownRequestError
+
+    if (err.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Sous-catégorie non trouvée' },
+        { status: 404 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Échec de la suppression de la sous-catégorie' },
       { status: 500 }
-    );
+    )
   }
 }

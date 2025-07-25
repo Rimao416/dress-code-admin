@@ -93,6 +93,7 @@ export class CloudinaryService {
             const response: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
             resolve(response);
           } catch (error) {
+             console.error('Invalid response format', error);
             reject(new Error('Invalid response format'));
           }
         } else {

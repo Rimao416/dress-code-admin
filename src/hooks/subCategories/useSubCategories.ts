@@ -1,11 +1,11 @@
-// hooks/useSubCategories.ts
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { getSubCategories } from '@/services/subCategory.service';
 import useSubCategoryStore from '@/store/subCategoryStore';
+
 export const useSubCategories = () => {
   const { subCategories, setSubCategories, setError, setLoading } = useSubCategoryStore();
-  
+
   const {
     data,
     error,
@@ -20,7 +20,7 @@ export const useSubCategories = () => {
 
   useEffect(() => {
     setLoading(isLoading || isFetching);
-  }, [isLoading, isFetching]);
+  }, [isLoading, isFetching, setLoading]);
 
   useEffect(() => {
     if (data) {
@@ -31,14 +31,14 @@ export const useSubCategories = () => {
       }));
       setSubCategories(formattedData);
     }
-  }, [data]);
+  }, [data, setSubCategories]);
 
   useEffect(() => {
     if (error) {
       const message = error instanceof Error ? error.message : 'Une erreur inconnue est survenue.';
       setError(message);
     }
-  }, [error]);
+  }, [error, setError]);
 
   return {
     data: subCategories,

@@ -21,29 +21,29 @@ export const useCategories = () => {
   });
 
   // Met à jour l'état de chargement dans le store
-  useEffect(() => {
-    setLoading(isLoading || isFetching);
-  }, [isLoading, isFetching]);
+ useEffect(() => {
+  setLoading(isLoading || isFetching);
+}, [isLoading, isFetching, setLoading]);
 
   // Met à jour les catégories dans le store
-  useEffect(() => {
-    if (data) {
-      const formattedData = data.map(category => ({
-        ...category,
-        // createdAt: new Date(category.createdAt).toISOString(),
-        // updatedAt: new Date(category.updatedAt).toISOString(),
-      }));
-      setCategories(formattedData);
-    }
-  }, [data]);
+useEffect(() => {
+  if (data) {
+    const formattedData = data.map(category => ({
+      ...category,
+      // createdAt: new Date(category.createdAt).toISOString(),
+      // updatedAt: new Date(category.updatedAt).toISOString(),
+    }));
+    setCategories(formattedData);
+  }
+}, [data, setCategories]);
 
   // Gère les erreurs
-  useEffect(() => {
-    if (error) {
-      const message = error instanceof Error ? error.message : 'Une erreur inconnue est survenue.';
-      setError(message);
-    }
-  }, [error]);
+useEffect(() => {
+  if (error) {
+    const message = error instanceof Error ? error.message : 'Une erreur inconnue est survenue.';
+    setError(message);
+  }
+}, [error, setError]);
 
   return {
     data: categories,

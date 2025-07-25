@@ -1,29 +1,27 @@
 // app/api/products/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@/generated/prisma'
-import { productSchema } from '@/schemas/productSchema'
-import { z } from 'zod'
+import { PrismaClient, Prisma } from '@/generated/prisma'
+import { apiProductSchema } from '@/schemas/productSchema'
+import { ZodError } from 'zod'
 
 const prisma = new PrismaClient()
 
-// GET /api/products - Récupérer tous les produits
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const categoryId = searchParams.get('categoryId')
-    const subcategoryId = searchParams.get('subcategoryId')
     const available = searchParams.get('available')
     const search = searchParams.get('search')
 
     const skip = (page - 1) * limit
 
-    // Construction des filtres
-    const where: any = {}
-    
+    // ✅ Utilisation du type Prisma généré au lieu de 'any'
+    const where: Prisma.ProductWhereInput = {}
+
     if (categoryId) where.categoryId = categoryId
-    if (subcategoryId) where.subcategoryId = subcategoryId
+    // if (subcategoryId) where.subcategoryId = subcategoryId
     if (available !== null) where.available = available === 'true'
     if (search) {
       where.OR = [
@@ -66,19 +64,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/products - Créer un nouveau produit
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
-    // Validation des données avec le schéma Zod (adaptation pour les données JSON)
-    const productValidationSchema = productSchema.omit({ images: true }).extend({
-      images: z.array(z.string()).min(1, 'Au moins une image est requise')
-    })
-    
-    const validatedData = productValidationSchema.parse(body)
+    const validatedData = apiProductSchema.parse(body)
 
-    // Vérifier que la catégorie existe
     const categoryExists = await prisma.category.findUnique({
       where: { id: validatedData.categoryId }
     })
@@ -90,7 +80,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Vérifier la sous-catégorie si fournie
     if (validatedData.subcategoryId) {
       const subcategoryExists = await prisma.subCategory.findUnique({
         where: { id: validatedData.subcategoryId }
@@ -104,7 +93,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Créer le produit avec ses variantes
     const product = await prisma.product.create({
       data: {
         name: validatedData.name,
@@ -115,7 +103,7 @@ export async function POST(request: NextRequest) {
         stock: validatedData.stock,
         available: validatedData.available,
         variants: {
-          create: validatedData.variants.map(variant => ({
+          create: validatedData.variants.map((variant) => ({
             size: variant.size,
             color: variant.color,
             quantity: variant.quantity
@@ -132,9 +120,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(product, { status: 201 })
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Données invalides',error: error },
+        { error: 'Données invalides', details: error.issues },
         { status: 400 }
       )
     }

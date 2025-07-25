@@ -13,10 +13,10 @@ export const useDeleteProduct = () => {
     },
   });
 
-  const deleteProducts = (
-    idsToDelete: string | string[],
-    options?: { onSuccess?: () => void; onError?: (err: any) => void }
-  ) => {
+const deleteProducts = (
+  idsToDelete: string | string[],
+  options?: { onSuccess?: () => void; onError?: (err: Error) => void }
+) => {
     if (Array.isArray(idsToDelete)) {
       if (idsToDelete.length === 1) {
         return deleteSingleMutation.mutate(idsToDelete[0], options);

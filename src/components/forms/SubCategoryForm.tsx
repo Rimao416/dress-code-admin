@@ -136,10 +136,10 @@ export default function SubCategoryForm({
               ? 'bg-blue-900/20 border-blue-500/50 text-blue-200' 
               : 'bg-blue-50 border-blue-400 text-blue-700'
           }`}>
-            <p className="text-sm">
-              <span className="font-medium">Modification :</span> "{initialData.name}" 
-              <span className="opacity-75"> (actuellement dans "{initialData.category.name}")</span>
-            </p>
+         <p className="text-sm">
+  <span className="font-medium">Modification :</span> &quot;{initialData.name}&quot; 
+  <span className="opacity-75"> (actuellement dans &quot;{initialData.category.name}&quot;)</span>
+</p>
           </div>
         )}
 
