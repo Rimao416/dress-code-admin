@@ -5,10 +5,10 @@ import { NextResponse } from 'next/server'
 // GET: récupération d'une catégorie par ID
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // params est maintenant Promise
 ) {
   try {
-    const { id } = params
+    const { id } = await params // Await params avant d'accéder à ses propriétés
 
     const category = await prisma.category.findUnique({
       where: { id },
@@ -59,10 +59,10 @@ export async function GET(
 // PUT: mise à jour d'une catégorie
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // params est maintenant Promise
 ) {
   try {
-    const { id } = params
+    const { id } = await params // Await params avant d'accéder à ses propriétés
     const body = await req.json()
     const { name, description, parentId, image, isActive, sortOrder } = body
 
@@ -172,10 +172,10 @@ export async function PUT(
 // DELETE: suppression d'une catégorie
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // params est maintenant Promise
 ) {
   try {
-    const { id } = params
+    const { id } = await params // Await params avant d'accéder à ses propriétés
 
     // Vérifier que la catégorie existe
     const existingCategory = await prisma.category.findUnique({

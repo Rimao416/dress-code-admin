@@ -36,7 +36,7 @@ export default function EditCategoryPage() {
     data: category,
     isLoading,
     status,
-  } = useCategory(categoryId) // Utiliser string au lieu de Number(categoryId)
+  } = useCategory(categoryId)
 
   // Gestion des erreurs de chargement
   useEffect(() => {
@@ -53,22 +53,37 @@ export default function EditCategoryPage() {
     setLoading(true)
     
     try {
-      // Préparer les données de mise à jour avec l'ID
+      // ✅ CORRECTION: Envoyer TOUTES les données du formulaire
       const categoryUpdateData = {
-        id: categoryId, // Ajouter l'ID
+        id: categoryId,
         name: data.name,
-        description: data.description || "Aucune description fournie",
+        description: data.description || null,
+        parentId: data.parentId || null, // ✅ Ajouter parentId
+        image: data.image || null,       // ✅ Ajouter image
+        isActive: data.isActive ?? true, // ✅ Ajouter isActive
+        sortOrder: data.sortOrder ?? 0   // ✅ Ajouter sortOrder
       }
+
+      console.log('Données envoyées à l\'API:', categoryUpdateData); // Debug
 
       const updatedCategory = await updateCategory(categoryUpdateData)
 
+      // ✅ CORRECTION: Formater correctement toutes les données
       const formattedCategory: Category = {
         id: updatedCategory.id,
         name: updatedCategory.name,
         slug: updatedCategory.slug,
         description: updatedCategory.description,
+        parentId: updatedCategory.parentId,     // ✅ Inclure parentId
+        image: updatedCategory.image,           // ✅ Inclure image
+        isActive: updatedCategory.isActive,     // ✅ Inclure isActive
+        sortOrder: updatedCategory.sortOrder,   // ✅ Inclure sortOrder
         createdAt: new Date(updatedCategory.createdAt),
         updatedAt: new Date(updatedCategory.updatedAt),
+        // ✅ Inclure les relations si elles existent
+        parent: updatedCategory.parent,
+        children: updatedCategory.children,
+        _count: updatedCategory._count
       }
 
       // Mise à jour du cache React Query
@@ -81,6 +96,7 @@ export default function EditCategoryPage() {
 
       // Invalidation des queries pour forcer le rechargement
       await queryClient.invalidateQueries({ queryKey: ['categories'] })
+      await queryClient.invalidateQueries({ queryKey: ['category', categoryId] })
 
       setMessage('Category updated successfully', 'success')
       router.push('/dashboard/categories')
@@ -89,6 +105,7 @@ export default function EditCategoryPage() {
         err instanceof Error ? err.message : 'An unknown error occurred'
       setError(errorMessage)
       setMessage(errorMessage, 'error')
+      console.error('Erreur lors de la mise à jour:', err); // Debug
     } finally {
       setIsSubmitting(false)
       setLoading(false)
@@ -128,7 +145,6 @@ export default function EditCategoryPage() {
           title='Category management'
         />
        
-        {/* Container principal avec support du thème sombre */}
         <div className={`
           rounded-lg p-6 shadow-sm transition-all duration-300
           ${isDarkMode

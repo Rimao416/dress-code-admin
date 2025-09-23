@@ -15,7 +15,8 @@ export const categorySchema = z.object({
   
   parentId: z
     .string()
-    .optional(),
+    .nullable() // Permet null
+    .optional(), // Et undefined
   
   image: z
     .string()

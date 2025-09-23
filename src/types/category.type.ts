@@ -2,9 +2,9 @@
 
 export type CategoryBase = {
   name: string;
-  description?: string;
-  parentId?: string | null; // Correction : permet null explicitement
-  image?: string;
+  description?: string | null; // ✅ Accepte null ET undefined
+  parentId?: string | null;
+  image?: string | null;       // ✅ Accepte null ET undefined
   isActive?: boolean;
   sortOrder?: number;
 };

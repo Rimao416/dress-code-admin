@@ -34,50 +34,60 @@ export default function CategoryForm({
     reset,
     setValue,
     watch,
-    control // Ajout du control pour Controller
+    control
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
-    defaultValues: {}
+    // SOLUTION 1: Définir les defaultValues correctement
+    defaultValues: {
+      name: '',
+      description: '',
+      parentId: '',
+      image: '',
+      isActive: true,
+      sortOrder: 0,
+    }
   });
 
   const watchParentId = watch('parentId');
 
+  // SOLUTION 2: Utiliser reset au lieu de setValue individuels
   useEffect(() => {
     if (initialData) {
-      setValue('name', initialData.name);
-      setValue('description', initialData.description || '');
-      setValue('parentId', initialData.parentId || '');
-      setValue('image', initialData.image || '');
-      setValue('isActive', initialData.isActive ?? true);
-      setValue('sortOrder', initialData.sortOrder || 0);
+      reset({
+        name: initialData.name,
+        description: initialData.description || '',
+        parentId: initialData.parentId || '',
+        image: initialData.image || '',
+        isActive: initialData.isActive ?? true,
+        sortOrder: initialData.sortOrder || 0,
+      });
     }
-  }, [initialData, setValue]);
+  }, [initialData, reset]);
 
   const handleFormSubmit = async (data: CategoryFormData) => {
-  // Nettoyer les données avant soumission
-  const cleanData: CategoryFormData = {
-    name: data.name,
-    description: data.description === '' ? undefined : data.description,
-    parentId: data.parentId === '' ? undefined : data.parentId, // undefined au lieu de null
-    image: data.image === '' ? undefined : data.image,
-    isActive: data.isActive ?? true,
-    sortOrder: data.sortOrder ?? 0,
-  };
-  
-  await onSubmit(cleanData);
- 
-  if (!initialData) {
-    reset();
-  }
-};
+    const cleanData: CategoryFormData = {
+      name: data.name.trim(),
+      description: data.description?.trim() || undefined,
+      parentId: data.parentId === '' ? null : data.parentId,
+      image: data.image?.trim() || undefined,
+      isActive: data.isActive ?? true,
+      sortOrder: data.sortOrder ?? 0,
+    };
 
-  // Obtenir les catégories disponibles comme parents (exclure la catégorie actuelle et ses enfants)
+    console.log('Données envoyées:', cleanData);
+    await onSubmit(cleanData);
+    
+    if (!initialData) {
+      reset();
+    }
+  };
+
+  // Obtenir les catégories disponibles comme parents
   const getAvailableParentCategories = () => {
     if (!initialData) {
       return getCategoriesHierarchy();
     }
 
-    // Exclure la catégorie actuelle et ses descendants
     const excludeIds = new Set([initialData.id]);
     
     const addDescendants = (categoryId: string) => {
@@ -96,7 +106,6 @@ export default function CategoryForm({
 
   const availableParents = getAvailableParentCategories();
 
-  // Créer les options pour le select avec indentation
   const parentOptions = [
     { value: '', label: 'Aucune catégorie parente (Catégorie racine)' },
     ...availableParents.map(category => ({
@@ -143,7 +152,7 @@ export default function CategoryForm({
           />
         </FormField>
 
-        {/* Catégorie parente - UTILISATION DE CONTROLLER */}
+        {/* SOLUTION 3: Catégorie parente avec key pour forcer le re-render */}
         <FormField
           label="Catégorie parente"
           htmlFor="parentId"
@@ -156,10 +165,14 @@ export default function CategoryForm({
             control={control}
             render={({ field }) => (
               <Select
+                key={`parentId-${initialData?.id || 'new'}-${field.value}`} // Force re-render
                 id="parentId"
                 options={parentOptions}
                 value={field.value || ''}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  console.log('Select onChange:', value); // Debug
+                  field.onChange(value);
+                }}
                 placeholder="Sélectionnez une catégorie parente"
               />
             )}
@@ -229,6 +242,15 @@ export default function CategoryForm({
           </Button>
         </div>
       </form>
+
+      {/* Debug info - à retirer en production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+          <p><strong>Debug:</strong></p>
+          <p>Initial parentId: {initialData?.parentId || 'null'}</p>
+          <p>Current form parentId: {watchParentId || 'empty'}</p>
+        </div>
+      )}
     </div>
   )
 }
