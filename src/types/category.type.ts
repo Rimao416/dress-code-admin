@@ -3,7 +3,7 @@
 export type CategoryBase = {
   name: string;
   description?: string;
-  parentId?: string | null;
+  parentId?: string | null; // Correction : permet null explicitement
   image?: string;
   isActive?: boolean;
   sortOrder?: number;

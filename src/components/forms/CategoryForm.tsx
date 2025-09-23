@@ -1,6 +1,6 @@
 'use client'
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Category } from '@/types/category.type'
 import { categorySchema, CategoryFormData } from '@/schemas/category.schema'
@@ -33,7 +33,8 @@ export default function CategoryForm({
     formState: { errors },
     reset,
     setValue,
-    watch
+    watch,
+    control // Ajout du control pour Controller
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {}
@@ -53,20 +54,22 @@ export default function CategoryForm({
   }, [initialData, setValue]);
 
   const handleFormSubmit = async (data: CategoryFormData) => {
-    // Nettoyer les données avant soumission
-    const cleanData = {
-      ...data,
-      parentId: data.parentId === '' ? null : data.parentId,
-      description: data.description === '' ? undefined : data.description,
-      image: data.image === '' ? undefined : data.image,
-    };
-    
-    await onSubmit(cleanData);
-   
-    if (!initialData) {
-      reset();
-    }
+  // Nettoyer les données avant soumission
+  const cleanData: CategoryFormData = {
+    name: data.name,
+    description: data.description === '' ? undefined : data.description,
+    parentId: data.parentId === '' ? undefined : data.parentId, // undefined au lieu de null
+    image: data.image === '' ? undefined : data.image,
+    isActive: data.isActive ?? true,
+    sortOrder: data.sortOrder ?? 0,
   };
+  
+  await onSubmit(cleanData);
+ 
+  if (!initialData) {
+    reset();
+  }
+};
 
   // Obtenir les catégories disponibles comme parents (exclure la catégorie actuelle et ses enfants)
   const getAvailableParentCategories = () => {
@@ -96,7 +99,7 @@ export default function CategoryForm({
   // Créer les options pour le select avec indentation
   const parentOptions = [
     { value: '', label: 'Aucune catégorie parente (Catégorie racine)' },
-    ...availableParents.  map(category => ({
+    ...availableParents.map(category => ({
       value: category.id,
       label: '  '.repeat(category.level) + category.name
     }))
@@ -140,7 +143,7 @@ export default function CategoryForm({
           />
         </FormField>
 
-        {/* Catégorie parente */}
+        {/* Catégorie parente - UTILISATION DE CONTROLLER */}
         <FormField
           label="Catégorie parente"
           htmlFor="parentId"
@@ -148,10 +151,18 @@ export default function CategoryForm({
           required={false}
           helpText="Sélectionnez une catégorie parente pour créer une sous-catégorie"
         >
-          <Select
-            id="parentId"
-            options={parentOptions}
-            {...register('parentId')}
+          <Controller
+            name="parentId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                id="parentId"
+                options={parentOptions}
+                value={field.value || ''}
+                onValueChange={field.onChange}
+                placeholder="Sélectionnez une catégorie parente"
+              />
+            )}
           />
         </FormField>
 
