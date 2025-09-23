@@ -8,6 +8,8 @@ import { useTheme } from '@/context/ThemeContext'
 import FormField from '../ui/formfield'
 import Input from '../ui/input'
 import Button from '../ui/button'
+import Select from '../ui/select'
+import { useCategoryStore } from '@/store/categoryStore'
 
 interface CategoryFormProps {
   onSubmit: (data: CategoryFormData) => Promise<void>;
@@ -23,32 +25,82 @@ export default function CategoryForm({
   submitButtonText,
 }: CategoryFormProps) {
   const { isDarkMode } = useTheme();
+  const { categories, getRootCategories, getCategoriesHierarchy } = useCategoryStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
+    watch
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
     defaultValues: {}
   });
 
+  const watchParentId = watch('parentId');
+
   useEffect(() => {
     if (initialData) {
       setValue('name', initialData.name);
-      setValue('description', initialData.description);
+      setValue('description', initialData.description || '');
+      setValue('parentId', initialData.parentId || '');
+      setValue('image', initialData.image || '');
+      setValue('isActive', initialData.isActive ?? true);
+      setValue('sortOrder', initialData.sortOrder || 0);
     }
   }, [initialData, setValue]);
 
   const handleFormSubmit = async (data: CategoryFormData) => {
-    await onSubmit(data);
+    // Nettoyer les données avant soumission
+    const cleanData = {
+      ...data,
+      parentId: data.parentId === '' ? null : data.parentId,
+      description: data.description === '' ? undefined : data.description,
+      image: data.image === '' ? undefined : data.image,
+    };
+    
+    await onSubmit(cleanData);
    
     if (!initialData) {
       reset();
     }
   };
+
+  // Obtenir les catégories disponibles comme parents (exclure la catégorie actuelle et ses enfants)
+  const getAvailableParentCategories = () => {
+    if (!initialData) {
+      return getCategoriesHierarchy();
+    }
+
+    // Exclure la catégorie actuelle et ses descendants
+    const excludeIds = new Set([initialData.id]);
+    
+    const addDescendants = (categoryId: string) => {
+      categories.forEach(cat => {
+        if (cat.parentId === categoryId) {
+          excludeIds.add(cat.id);
+          addDescendants(cat.id);
+        }
+      });
+    };
+    
+    addDescendants(initialData.id);
+    
+    return getCategoriesHierarchy().filter(cat => !excludeIds.has(cat.id));
+  };
+
+  const availableParents = getAvailableParentCategories();
+
+  // Créer les options pour le select avec indentation
+  const parentOptions = [
+    { value: '', label: 'Aucune catégorie parente (Catégorie racine)' },
+    ...availableParents.  map(category => ({
+      value: category.id,
+      label: '  '.repeat(category.level) + category.name
+    }))
+  ];
 
   return (
     <div className={`p-6 rounded-xl transition-all duration-300 ${
@@ -86,6 +138,72 @@ export default function CategoryForm({
             placeholder="Entrez une description (facultatif)"
             {...register('description')}
           />
+        </FormField>
+
+        {/* Catégorie parente */}
+        <FormField
+          label="Catégorie parente"
+          htmlFor="parentId"
+          error={errors.parentId?.message}
+          required={false}
+          helpText="Sélectionnez une catégorie parente pour créer une sous-catégorie"
+        >
+          <Select
+            id="parentId"
+            options={parentOptions}
+            {...register('parentId')}
+          />
+        </FormField>
+
+        {/* Image URL - OPTIONNEL */}
+        <FormField
+          label="URL de l'image"
+          htmlFor="image"
+          error={errors.image?.message}
+          required={false}
+          helpText="URL de l'image représentant la catégorie"
+        >
+          <Input
+            id="image"
+            placeholder="https://exemple.com/image.jpg"
+            {...register('image')}
+          />
+        </FormField>
+
+        {/* Ordre de tri */}
+        <FormField
+          label="Ordre de tri"
+          htmlFor="sortOrder"
+          error={errors.sortOrder?.message}
+          required={false}
+          helpText="Nombre pour définir l'ordre d'affichage (0 = premier)"
+        >
+          <Input
+            id="sortOrder"
+            type="number"
+            placeholder="0"
+            {...register('sortOrder', { valueAsNumber: true })}
+          />
+        </FormField>
+
+        {/* Statut actif */}
+        <FormField
+          label="Statut"
+          htmlFor="isActive"
+          error={errors.isActive?.message}
+          required={false}
+        >
+          <div className="flex items-center space-x-2">
+            <input
+              id="isActive"
+              type="checkbox"
+              {...register('isActive')}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+              Catégorie active
+            </label>
+          </div>
         </FormField>
 
         {/* Bouton de soumission */}

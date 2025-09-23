@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { ManagementPageConfig } from "@/types/management.type";
 import { Category } from "@/types/category.type";
 import { ColumnDef } from "@tanstack/react-table";
@@ -7,17 +7,15 @@ import { useCallback, useMemo, useState } from "react";
 import ManagementPage from "@/components/common/ManagementPage";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useCategories } from "@/hooks/categories/useCategories";
-import { useDeleteCategory } from "@/hooks/categories/useDeleteCategory";
 import ActionModal from "@/components/common/ActionModal";
-
+import { useDeleteCategory } from "@/hooks/categories/useDeleteCategory";
+import {useCategoryStore} from "@/store/categoryStore";
 export default function CategoriesPage() {
   const router = useRouter();
   const { data: categories, isLoading, isFetching, error, refetch } = useCategories();
-
   const { mutate: deleteCategories, isPending: isDeleting } = useDeleteCategory();
+  const { getCategoriesHierarchy } = useCategoryStore();
   
-  console.log(categories);
-
   // État pour le modal de suppression
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -62,20 +60,37 @@ export default function CategoriesPage() {
     }
   };
 
+  // Transformer les données en hiérarchie pour l'affichage
+  const hierarchicalCategories = useMemo(() => {
+    if (!categories) return [];
+    return getCategoriesHierarchy();
+  }, [categories, getCategoriesHierarchy]);
+
   // Filtres
   const filterOptions = useMemo(() => [
-    // {
-    //   key: 'createdAt',
-    //   label: 'Date',
-    //   options: [],
-    // },
+    {
+      key: 'isActive',
+      label: 'Statut',
+      options: [
+        { value: 'true', label: 'Active' },
+        { value: 'false', label: 'Inactive' }
+      ],
+    },
+    {
+      key: 'parentId',
+      label: 'Type',
+      options: [
+        { value: 'null', label: 'Catégorie racine' },
+        { value: 'not-null', label: 'Sous-catégorie' }
+      ],
+    },
   ], []);
 
   // Config de la page de gestion
   const categoriesConfig: ManagementPageConfig<Category> = useMemo(() => ({
     title: 'Gestion des catégories',
     useDataHook: () => ({
-      data: categories,
+      data: hierarchicalCategories,
       isLoading,
       isFetching,
       error: error ?? undefined,
@@ -83,32 +98,90 @@ export default function CategoriesPage() {
     }),
     columns: [
       {
-        accessorKey: 'id',
-        header: 'ID',
-        cell: ({ getValue }) => (
-          <span className="text-gray-500">{getValue() as string}</span>
-        ),
-      },
-      {
         accessorKey: 'name',
         header: 'Nom de la catégorie',
+        cell: ({ row }) => {
+          const category = row.original as any;
+          const indent = '  '.repeat(category.level || 0);
+          return (
+            <div className="flex items-center">
+              <span className="text-gray-400 mr-2">{indent}</span>
+              {category.level > 0 && <span className="text-gray-400 mr-2">└─</span>}
+              <span className={category.level > 0 ? 'text-blue-600' : 'font-semibold'}>
+                {category.name}
+              </span>
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'description',
         header: 'Description',
-        cell: ({ getValue }) => (
-          <span className="text-gray-500">{getValue() as string}</span>
+        cell: ({ getValue }) => {
+          const value = getValue() as string;
+          return (
+            <span className="text-gray-500 truncate max-w-xs">
+              {value || 'Aucune description'}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'parent.name',
+        header: 'Catégorie parente',
+        cell: ({ row }) => (
+          <span className="text-gray-500">
+            {row.original.parent?.name || 'Catégorie racine'}
+          </span>
         ),
       },
-      // {
-      //   accessorKey: 'createdAt',
-      //   header: 'Date de création',
-      //   cell: ({ getValue }) => {
-      //     const value = getValue() as string;
-      //     const date = format(new Date(value), 'dd/MM/yyyy');
-      //     return <span className="text-gray-500">{date}</span>;
-      //   },
-      // },
+      {
+        accessorKey: '_count.children',
+        header: 'Sous-catégories',
+        cell: ({ row }) => {
+          const count = row.original._count?.children || 0;
+          return (
+            <span className="text-gray-500">
+              {count}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: '_count.products',
+        header: 'Produits',
+        cell: ({ row }) => {
+          const count = row.original._count?.products || 0;
+          return (
+            <span className="text-gray-500">
+              {count}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'isActive',
+        header: 'Statut',
+        cell: ({ getValue }) => {
+          const isActive = getValue() as boolean;
+          return (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              isActive 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'sortOrder',
+        header: 'Ordre',
+        cell: ({ getValue }) => (
+          <span className="text-gray-500">{getValue() as number}</span>
+        ),
+      },
     ] as ColumnDef<Category>[],
     addNewButton: {
       label: 'Ajouter une catégorie',
@@ -127,7 +200,7 @@ export default function CategoriesPage() {
       },
     ],
     filters: filterOptions,
-  }), [categories, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick]);
+  }), [hierarchicalCategories, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick]);
 
   return (
     <DashboardLayout>
