@@ -187,18 +187,23 @@ export default function CategoriesPage() {
       label: 'Ajouter une catégorie',
       onClick: () => router.push('/dashboard/categories/add'),
     },
-    actions: [
-      {
-        label: 'Edit',
-        variant: 'secondary',
-        onClick: (id) => router.push(`/dashboard/categories/${id}/edit`),
-      },
-      {
-        label: 'Delete',
-        variant: 'danger',
-        onClick: (id) => handleDeleteClick(id),
-      },
-    ],
+actions: [
+  {
+    label: 'View',
+    variant: 'primary', // ou 'secondary' selon votre préférence
+    onClick: (id) => router.push(`/dashboard/categories/${id}/view`),
+  },
+  {
+    label: 'Edit',
+    variant: 'secondary',
+    onClick: (id) => router.push(`/dashboard/categories/${id}/edit`),
+  },
+  {
+    label: 'Delete',
+    variant: 'danger',
+    onClick: (id) => handleDeleteClick(id),
+  },
+],
     filters: filterOptions,
   }), [hierarchicalCategories, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick]);
 

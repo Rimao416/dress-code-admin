@@ -1,7 +1,7 @@
 "use client";
 import { useRef } from 'react';
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, X, Eye } from 'lucide-react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -57,11 +57,12 @@ export interface DataTableProps<T> {
   title: string;
   loading?: boolean;
   error?: string | null;
- onEdit?: (id: string) => void;        // ✅ Changé de number à string
-  onDelete?: (id: string) => void;      // ✅ Changé de number à string
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onView?: (id: string) => void;
   onViewDetails?: (item: T) => void;
   filterOptions?: FilterOption[];
-  keyExtractor: (item: T) => string;    // ✅ Changé de number à string
+  keyExtractor: (item: T) => string;
   readOnly?: boolean;
 }
 
@@ -98,6 +99,7 @@ export function DataTable<T extends object>({
   error = null,
   onEdit,
   onDelete,
+  onView,
   onViewDetails,
   filterOptions = [],
   keyExtractor,
@@ -130,12 +132,34 @@ export function DataTable<T extends object>({
   // Combine provided columns with actions columns (no selection column)
   const allColumns: ColumnDef<T>[] = [
     ...columns,
-    // Colonne d'actions seulement si pas en mode lecture seule ET qu'il y a des actions (edit ou delete uniquement)
-    ...(readOnly ? [] : (onEdit || onDelete) ? [{
+    // Colonne d'actions seulement si pas en mode lecture seule ET qu'il y a des actions (view, edit ou delete)
+    ...(readOnly ? [] : (onView || onEdit || onDelete) ? [{
       id: 'actions',
       header: '',
       cell: ({ row }: { row: Row<T> }) => (
         <div className="flex space-x-2">
+          {onView && (
+            <motion.button
+              className={`p-1 rounded-full disabled:opacity-50 transition-colors ${
+                isDarkMode 
+                  ? 'hover:bg-slate-800' 
+                  : 'hover:bg-gray-100'
+              }`}
+              whileHover={!loading ? { 
+                scale: 1.15, 
+                backgroundColor: isDarkMode ? "#1e293b" : "#f0f9ff" 
+              } : {}}
+              whileTap={!loading ? { scale: 0.9 } : {}}
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(keyExtractor(row.original));
+              }}
+              disabled={loading}
+              aria-label={`View item ${row.id}`}
+            >
+              <Eye className="h-4 w-4 text-green-500" />
+            </motion.button>
+          )}
           {onEdit && (
             <motion.button
               className={`p-1 rounded-full disabled:opacity-50 transition-colors ${
@@ -221,21 +245,6 @@ export function DataTable<T extends object>({
       },
     },
   });
- 
-  // Handle refresh
-  // const handleRefresh = async () => {
-  //   if (onRefresh && !isRefreshing) {
-  //     setIsRefreshing(true);
-  //     try {
-  //       await onRefresh();
-  //       setMessage?.('Data refreshed successfully', 'success');
-  //     } catch (error) {
-  //       setMessage?.('Failed to refresh data', 'error');
-  //     } finally {
-  //       setIsRefreshing(false);
-  //     }
-  //   }
-  // };
  
   // Handle filter changes
   const handleFilterChange = (columnId: string, value: string) => {
@@ -431,22 +440,6 @@ export function DataTable<T extends object>({
             }`}>
               {title}
             </h2>
-            {/* {onRefresh && (
-              <motion.button
-                className={`p-2 rounded-full disabled:opacity-50 transition-colors ${
-                  isDarkMode 
-                    ? 'hover:bg-slate-700 text-slate-400' 
-                    : 'hover:bg-gray-100 text-gray-500'
-                }`}
-                onClick={handleRefresh}
-                disabled={loading || isRefreshing}
-                whileHover={!loading && !isRefreshing ? { scale: 1.1 } : {}}
-                whileTap={!loading && !isRefreshing ? { scale: 0.9 } : {}}
-                aria-label="Refresh data"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </motion.button>
-            )} */}
           </div>
          
           {/* Error message */}

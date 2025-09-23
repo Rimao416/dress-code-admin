@@ -22,6 +22,10 @@ const ManagementPage = <T extends { id: string | number }>({ config }: Managemen
   const deleteAction = config.actions?.find(action => action.label === 'Delete');
   deleteAction?.onClick(String(id)); // 🔁 force en string
 };
+const handleView = (id: string | number) => {
+  const viewAction = config.actions?.find(action => action.label === 'View');
+  viewAction?.onClick(String(id));
+};
 
   const filterOptions = config.filters?.map(filter => ({
     label: filter.label,
@@ -181,6 +185,7 @@ const ManagementPage = <T extends { id: string | number }>({ config }: Managemen
                 title={config.title}
                 loading={isLoading}
                 onEdit={config.actions?.some(a => a.label === 'Edit') ? handleEdit : undefined}
+                onView={config.actions?.some(a => a.label === 'View') ? handleView : undefined}
                 onDelete={config.actions?.some(a => a.label === 'Delete') ? handleDelete : undefined}
                 filterOptions={filterOptions}
                 keyExtractor={(item) => String(item.id)}
