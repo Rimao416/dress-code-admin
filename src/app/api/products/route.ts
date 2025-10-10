@@ -3,25 +3,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient, Prisma } from '@/generated/prisma'
 import { apiProductSchema } from '@/schemas/productSchema'
 import { ZodError } from 'zod'
-
-const prisma = new PrismaClient()
+import prisma from '@/lib/client'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
     const categoryId = searchParams.get('categoryId')
     const available = searchParams.get('available')
     const search = searchParams.get('search')
-
-    const skip = (page - 1) * limit
 
     // ✅ Utilisation du type Prisma généré au lieu de 'any'
     const where: Prisma.ProductWhereInput = {}
 
     if (categoryId) where.categoryId = categoryId
-    // if (subcategoryId) where.subcategoryId = subcategoryId
     if (available !== null) where.available = available === 'true'
     if (search) {
       where.OR = [
@@ -30,31 +24,20 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          category: {
-            select: { id: true, name: true }
-          },
-          variants: true
+    const products = await prisma.product.findMany({
+      where,
+      include: {
+        category: {
+          select: { id: true, name: true }
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit
-      }),
-      prisma.product.count({ where })
-    ])
-
-    return NextResponse.json({
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
+        variants: true
+      },
+      orderBy: { createdAt: 'desc' }
     })
+
+    console.log(products)
+
+    return NextResponse.json({ products })
   } catch (error) {
     console.error('Erreur lors de la récupération des produits:', error)
     return NextResponse.json(
@@ -64,73 +47,74 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const validatedData = apiProductSchema.parse(body)
 
-    const categoryExists = await prisma.category.findUnique({
-      where: { id: validatedData.categoryId }
-    })
+// export async function POST(request: NextRequest) {
+//   try {
+//     const body = await request.json()
+//     const validatedData = apiProductSchema.parse(body)
 
-    if (!categoryExists) {
-      return NextResponse.json(
-        { error: 'Catégorie non trouvée' },
-        { status: 400 }
-      )
-    }
+//     const categoryExists = await prisma.category.findUnique({
+//       where: { id: validatedData.categoryId }
+//     })
 
-    if (validatedData.subcategoryId) {
-      const subcategoryExists = await prisma.subCategory.findUnique({
-        where: { id: validatedData.subcategoryId }
-      })
+//     if (!categoryExists) {
+//       return NextResponse.json(
+//         { error: 'Catégorie non trouvée' },
+//         { status: 400 }
+//       )
+//     }
 
-      if (!subcategoryExists) {
-        return NextResponse.json(
-          { error: 'Sous-catégorie non trouvée' },
-          { status: 400 }
-        )
-      }
-    }
+//     if (validatedData.subcategoryId) {
+//       const subcategoryExists = await prisma.subCategory.findUnique({
+//         where: { id: validatedData.subcategoryId }
+//       })
 
-    const product = await prisma.product.create({
-      data: {
-        name: validatedData.name,
-        description: validatedData.description,
-        price: validatedData.price,
-        images: validatedData.images,
-        categoryId: validatedData.categoryId,
-        stock: validatedData.stock,
-        available: validatedData.available,
-        variants: {
-          create: validatedData.variants.map((variant) => ({
-            size: variant.size,
-            color: variant.color,
-            quantity: variant.quantity
-          }))
-        }
-      },
-      include: {
-        category: {
-          select: { id: true, name: true }
-        },
-        variants: true
-      }
-    })
+//       if (!subcategoryExists) {
+//         return NextResponse.json(
+//           { error: 'Sous-catégorie non trouvée' },
+//           { status: 400 }
+//         )
+//       }
+//     }
 
-    return NextResponse.json(product, { status: 201 })
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Données invalides', details: error.issues },
-        { status: 400 }
-      )
-    }
+//     const product = await prisma.product.create({
+//       data: {
+//         name: validatedData.name,
+//         description: validatedData.description,
+//         price: validatedData.price,
+//         images: validatedData.images,
+//         categoryId: validatedData.categoryId,
+//         stock: validatedData.stock,
+//         available: validatedData.available,
+//         variants: {
+//           create: validatedData.variants.map((variant) => ({
+//             size: variant.size,
+//             color: variant.color,
+//             quantity: variant.quantity
+//           }))
+//         }
+//       },
+//       include: {
+//         category: {
+//           select: { id: true, name: true }
+//         },
+//         variants: true
+//       }
+//     })
 
-    console.error('Erreur lors de la création du produit:', error)
-    return NextResponse.json(
-      { error: 'Erreur lors de la création du produit' },
-      { status: 500 }
-    )
-  }
-}
+//     return NextResponse.json(product, { status: 201 })
+//   } catch (error) {
+//     if (error instanceof ZodError) {
+//       return NextResponse.json(
+//         { error: 'Données invalides', details: error.issues },
+//         { status: 400 }
+//       )
+//     }
+
+//     console.error('Erreur lors de la création du produit:', error)
+//     return NextResponse.json(
+//       { error: 'Erreur lors de la création du produit' },
+//       { status: 500 }
+//     )
+//   }
+// }

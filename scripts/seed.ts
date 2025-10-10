@@ -19,14 +19,8 @@ async function seedDatabase() {
   const categories = await seedCategories();
   const products = await seedProducts(categories, brands);
   const addresses = await seedAddresses(clientUsers);
-  await seedCarts(clientUsers, products);
   await seedOrders(clientUsers, products, addresses);
   await seedReviews(clientUsers, products);
-  await seedWishlists(clientUsers, products);
-  await seedFavorites(clientUsers, products);
-  await seedSliders();
-  await seedNewsletterSubscribers();
-  await seedCoupons();
  
   console.log('Database seeding completed successfully!');
 }
@@ -145,11 +139,8 @@ async function seedCategories(): Promise<Category[]> {
  
   // Catégories principales
   const mainCategories = [
-    { name: 'Vêtements', slug: 'vetements', description: 'Tous les vêtements' },
-    { name: 'Chaussures', slug: 'chaussures', description: 'Toutes les chaussures' },
-    { name: 'Électronique', slug: 'electronique', description: 'Produits électroniques' },
-    { name: 'Maison', slug: 'maison', description: 'Articles pour la maison' },
-    { name: 'Sport', slug: 'sport', description: 'Articles de sport' }
+    { name: 'VÊTEMENTS', slug: 'vetements', description: 'Collection complète de vêtements' },
+    { name: 'ACCESSOIRES', slug: 'accessoires', description: 'Accessoires mode et bijoux' }
   ];
   
   const categories: Category[] = [];
@@ -165,31 +156,104 @@ async function seedCategories(): Promise<Category[]> {
     categories.push(category);
   }
   
-  // Sous-catégories
-  const subCategoriesData = [
-    { name: 'T-shirts', slug: 't-shirts', parentName: 'Vêtements' },
-    { name: 'Jeans', slug: 'jeans', parentName: 'Vêtements' },
-    { name: 'Robes', slug: 'robes', parentName: 'Vêtements' },
-    { name: 'Baskets', slug: 'baskets', parentName: 'Chaussures' },
-    { name: 'Bottes', slug: 'bottes', parentName: 'Chaussures' },
-    { name: 'Smartphones', slug: 'smartphones', parentName: 'Électronique' },
-    { name: 'Ordinateurs', slug: 'ordinateurs', parentName: 'Électronique' },
-    { name: 'Décoration', slug: 'decoration', parentName: 'Maison' },
-    { name: 'Fitness', slug: 'fitness', parentName: 'Sport' }
+  // Sous-catégories pour VÊTEMENTS
+  const vetementsSubCategories = [
+    { name: 'Robe', slug: 'robe', parentName: 'VÊTEMENTS' },
+    { name: 'Jupe', slug: 'jupe', parentName: 'VÊTEMENTS' },
+    { name: 'Pull', slug: 'pull', parentName: 'VÊTEMENTS' },
+    { name: 'Top', slug: 'top', parentName: 'VÊTEMENTS' },
+    { name: 'Gilet', slug: 'gilet', parentName: 'VÊTEMENTS' },
+    { name: 'Body', slug: 'body', parentName: 'VÊTEMENTS' },
+    { name: 'Chemise', slug: 'chemise', parentName: 'VÊTEMENTS' },
+    { name: 'Débardeur', slug: 'debardeur', parentName: 'VÊTEMENTS' },
+    { name: 'Blazer', slug: 'blazer', parentName: 'VÊTEMENTS' },
+    { name: 'Veste', slug: 'veste', parentName: 'VÊTEMENTS' },
+    { name: 'Manteau', slug: 'manteau', parentName: 'VÊTEMENTS' },
+    { name: 'Doudoune', slug: 'doudoune', parentName: 'VÊTEMENTS' },
+    { name: 'Pantalon', slug: 'pantalon', parentName: 'VÊTEMENTS' },
+    { name: 'Jean', slug: 'jean', parentName: 'VÊTEMENTS' },
+    { name: 'Tailleur', slug: 'tailleur', parentName: 'VÊTEMENTS' },
+    { name: 'Ensemble', slug: 'ensemble', parentName: 'VÊTEMENTS' },
+    { name: 'Legging', slug: 'legging', parentName: 'VÊTEMENTS' },
+    { name: 'Jogging', slug: 'jogging', parentName: 'VÊTEMENTS' },
+    { name: 'TEE shirt', slug: 'tee-shirt', parentName: 'VÊTEMENTS' },
+    { name: 'Short', slug: 'short', parentName: 'VÊTEMENTS' },
+    { name: 'Parka', slug: 'parka', parentName: 'VÊTEMENTS' },
+    { name: 'Abaya', slug: 'abaya', parentName: 'VÊTEMENTS' },
+    { name: 'Kimono', slug: 'kimono', parentName: 'VÊTEMENTS' },
+    { name: 'Caftan', slug: 'caftan', parentName: 'VÊTEMENTS' },
+    { name: 'Djelabba', slug: 'djelabba', parentName: 'VÊTEMENTS' }
   ];
   
-  for (const subCat of subCategoriesData) {
-    const parent: Category | undefined = categories.find((cat: Category) => cat.name === subCat.parentName);
+  // Sous-catégories pour ACCESSOIRES
+  const accessoiresSubCategories = [
+    { name: 'Sac à main', slug: 'sac-a-main', parentName: 'ACCESSOIRES' },
+    { name: 'Châle', slug: 'chale', parentName: 'ACCESSOIRES' },
+    { name: 'Ceinture', slug: 'ceinture', parentName: 'ACCESSOIRES' },
+    { name: 'Lunettes solaires', slug: 'lunettes-soleil', parentName: 'ACCESSOIRES' },
+    { name: 'Bijoux acier inoxydable', slug: 'bijoux-acier-inoxydable', parentName: 'ACCESSOIRES' }
+  ];
+  
+  // Sous-sous-catégories pour Bijoux acier inoxydable
+  const bijouxSubCategories = [
+    { name: 'Collier', slug: 'collier', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Bague', slug: 'bague', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Bracelet', slug: 'bracelet', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Gourmette', slug: 'gourmette', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Boucle d\'oreilles', slug: 'boucle-oreilles', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Coffret montre', slug: 'coffret-montre', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Broche', slug: 'broche', parentName: 'Bijoux acier inoxydable' },
+    { name: 'Raz de cou', slug: 'raz-de-cou', parentName: 'Bijoux acier inoxydable' }
+  ];
+  
+  // Créer les sous-catégories pour VÊTEMENTS
+  for (const subCat of vetementsSubCategories) {
+    const parent = categories.find((cat: Category) => cat.name === subCat.parentName);
     if (parent) {
-      const subCategory: Category = await prisma.category.create({
+      const subCategory = await prisma.category.create({
         data: {
           name: subCat.name,
           slug: subCat.slug,
           parentId: parent.id,
-          image: `https://example.com/categories/${subCat.slug}.jpg`
+          image: `https://example.com/categories/${subCat.slug}.jpg`,
+          sortOrder: vetementsSubCategories.indexOf(subCat)
         }
       });
       categories.push(subCategory);
+    }
+  }
+  
+  // Créer les sous-catégories pour ACCESSOIRES
+  for (const subCat of accessoiresSubCategories) {
+    const parent = categories.find((cat: Category) => cat.name === subCat.parentName);
+    if (parent) {
+      const subCategory = await prisma.category.create({
+        data: {
+          name: subCat.name,
+          slug: subCat.slug,
+          parentId: parent.id,
+          image: `https://example.com/categories/${subCat.slug}.jpg`,
+          sortOrder: accessoiresSubCategories.indexOf(subCat)
+        }
+      });
+      categories.push(subCategory);
+    }
+  }
+  
+  // Créer les sous-sous-catégories pour Bijoux
+  const bijouxParent = categories.find((cat: Category) => cat.name === 'Bijoux acier inoxydable');
+  if (bijouxParent) {
+    for (const subCat of bijouxSubCategories) {
+      const subSubCategory = await prisma.category.create({
+        data: {
+          name: subCat.name,
+          slug: subCat.slug,
+          parentId: bijouxParent.id,
+          image: `https://example.com/categories/${subCat.slug}.jpg`,
+          sortOrder: bijouxSubCategories.indexOf(subCat)
+        }
+      });
+      categories.push(subSubCategory);
     }
   }
   
@@ -202,67 +266,87 @@ async function seedProducts(categories: Category[], brands: Brand[]): Promise<Pr
  
   const productsData = [
     {
-      name: 'T-shirt Nike Sportswear',
-      description: 'T-shirt confortable en coton pour un usage quotidien',
-      shortDescription: 'T-shirt Nike en coton',
-      price: 29.99,
-      comparePrice: 39.99,
-      categoryName: 'T-shirts',
-      brandName: 'Nike',
-      tags: ['coton', 'confort', 'casual'],
-      featured: true,
-      isNewIn: true
-    },
-    {
-      name: 'Jean Levi\'s 501',
-      description: 'Le jean iconique de Levi\'s, coupe droite classique',
-      shortDescription: 'Jean Levi\'s 501 coupe droite',
+      name: 'Robe longue élégante',
+      description: 'Robe longue en tissu fluide pour occasions spéciales',
+      shortDescription: 'Robe longue élégante',
       price: 89.99,
-      comparePrice: 99.99,
-      categoryName: 'Jeans',
-      brandName: 'Levi\'s',
-      tags: ['denim', 'classique', 'durable'],
-      featured: true
-    },
-    {
-      name: 'iPhone 15 Pro',
-      description: 'Le dernier iPhone avec puce A17 Pro et appareil photo professionnel',
-      shortDescription: 'iPhone 15 Pro 128GB',
-      price: 1199.99,
-      categoryName: 'Smartphones',
-      brandName: 'Apple',
-      tags: ['smartphone', 'premium', 'camera'],
+      comparePrice: 119.99,
+      categoryName: 'Robe',
+      brandName: 'Zara',
+      tags: ['robe', 'longue', 'élégant', 'soirée'],
       featured: true,
       isNewIn: true
     },
     {
-      name: 'Samsung Galaxy S24',
-      description: 'Smartphone Android haut de gamme avec IA intégrée',
-      shortDescription: 'Galaxy S24 256GB',
-      price: 899.99,
-      comparePrice: 999.99,
-      categoryName: 'Smartphones',
-      brandName: 'Samsung',
-      tags: ['android', 'IA', 'photo'],
+      name: 'Jean slim délavé',
+      description: 'Jean slim en denim délavé, coupe moderne',
+      shortDescription: 'Jean slim délavé',
+      price: 69.99,
+      comparePrice: 89.99,
+      categoryName: 'Jean',
+      brandName: 'Levi\'s',
+      tags: ['jean', 'slim', 'délavé', 'casual'],
       featured: true
     },
     {
-      name: 'Baskets Adidas Ultraboost',
-      description: 'Chaussures de running avec technologie Boost',
-      shortDescription: 'Adidas Ultraboost running',
-      price: 159.99,
-      categoryName: 'Baskets',
-      brandName: 'Adidas',
-      tags: ['running', 'confort', 'boost']
+      name: 'Pull en cachemire',
+      description: 'Pull décontracté en cachemire pour un confort optimal',
+      shortDescription: 'Pull cachemire confortable',
+      price: 129.99,
+      categoryName: 'Pull',
+      brandName: 'H&M',
+      tags: ['pull', 'cachemire', 'confort', 'hiver'],
+      featured: true
     },
     {
-      name: 'Robe Zara fleurie',
-      description: 'Robe d\'été avec motif floral, parfaite pour les beaux jours',
-      shortDescription: 'Robe été motif floral',
+      name: 'Sac à main cuir',
+      description: 'Sac à main en cuir véritable, design intemporel',
+      shortDescription: 'Sac main cuir véritable',
+      price: 199.99,
+      comparePrice: 249.99,
+      categoryName: 'Sac à main',
+      brandName: 'Nike',
+      tags: ['sac', 'cuir', 'luxe', 'accessoire'],
+      featured: true,
+      isNewIn: true
+    },
+    {
+      name: 'Collier acier inoxydable',
+      description: 'Collier élégant en acier inoxydable, résistant à l\'eau',
+      shortDescription: 'Collier acier inoxydable',
       price: 49.99,
-      categoryName: 'Robes',
+      categoryName: 'Collier',
+      brandName: 'Sony',
+      tags: ['collier', 'acier', 'bijoux', 'élégant']
+    },
+    {
+      name: 'TEE shirt basique',
+      description: 'TEE shirt en coton bio, coupe regular fit',
+      shortDescription: 'TEE shirt coton bio',
+      price: 24.99,
+      categoryName: 'TEE shirt',
+      brandName: 'H&M',
+      tags: ['tee-shirt', 'coton', 'basique', 'casual'],
+      isNewIn: true
+    },
+    {
+      name: 'Abaya brodée',
+      description: 'Abaya traditionnelle avec broderies délicates',
+      shortDescription: 'Abaya brodée traditionnelle',
+      price: 149.99,
+      categoryName: 'Abaya',
       brandName: 'Zara',
-      tags: ['été', 'floral', 'tendance'],
+      tags: ['abaya', 'traditionnel', 'broderie', 'élégant'],
+      featured: true
+    },
+    {
+      name: 'Lunettes solaires aviateur',
+      description: 'Lunettes solaires style aviateur, protection UV400',
+      shortDescription: 'Lunettes solaires aviateur',
+      price: 79.99,
+      categoryName: 'Lunettes solaires',
+      brandName: 'Adidas',
+      tags: ['lunettes', 'soleil', 'protection', 'style'],
       isNewIn: true
     }
   ];
@@ -306,18 +390,19 @@ async function seedProducts(categories: Category[], brands: Brand[]): Promise<Pr
         }
       });
      
-      // Créer des variantes pour certains produits
-      if (['T-shirt Nike Sportswear', 'Jean Levi\'s 501', 'Robe Zara fleurie'].includes(productData.name)) {
+      // Créer des variantes pour les vêtements
+      if (['Robe longue élégante', 'Jean slim délavé', 'TEE shirt basique', 'Abaya brodée'].includes(productData.name)) {
         const sizes = ['S', 'M', 'L', 'XL'];
         const colors = [
           { name: 'Noir', hex: '#000000' },
           { name: 'Blanc', hex: '#FFFFFF' },
           { name: 'Bleu', hex: '#0066CC' },
-          { name: 'Rouge', hex: '#CC0000' }
+          { name: 'Rouge', hex: '#CC0000' },
+          { name: 'Beige', hex: '#F5F5DC' }
         ];
        
         for (const size of sizes) {
-          for (const color of colors.slice(0, 2)) { // Limiter à 2 couleurs par taille
+          for (const color of colors.slice(0, 3)) {
             await prisma.productVariant.create({
               data: {
                 productId: product.id,
@@ -342,7 +427,6 @@ async function seedProducts(categories: Category[], brands: Brand[]): Promise<Pr
   console.log(`Seeded ${products.length} products`);
   return products;
 }
-
 async function seedAddresses(clientUsers: UserWithClient[]): Promise<Address[]> {
   console.log('Seeding addresses...');
  
@@ -583,200 +667,7 @@ async function seedReviews(clientUsers: UserWithClient[], products: Product[]): 
   console.log(`Seeded ${reviews.length} reviews`);
 }
 
-async function seedWishlists(clientUsers: UserWithClient[], products: Product[]): Promise<void> {
-  console.log('Seeding wishlists...');
- 
-  for (let i = 0; i < Math.min(8, clientUsers.length); i++) {
-    const clientUser = clientUsers[i];
-   
-    const wishlist = await prisma.wishlist.create({
-      data: {
-        clientId: clientUser.client.id,
-        name: Math.random() > 0.5 ? 'Ma liste de souhaits' : 'Mes favoris',
-        isPublic: Math.random() > 0.7
-      }
-    });
-   
-    // Ajouter des produits à la wishlist
-    const numItems = Math.floor(Math.random() * 6) + 1;
-    const addedProducts = new Set<string>();
-   
-    for (let j = 0; j < numItems; j++) {
-      const randomProduct = products[Math.floor(Math.random() * products.length)];
-     
-      if (!addedProducts.has(randomProduct.id)) {
-        await prisma.wishlistItem.create({
-          data: {
-            wishlistId: wishlist.id,
-            productId: randomProduct.id,
-            note: Math.random() > 0.7 ? 'À acheter bientôt' : null
-          }
-        });
-        addedProducts.add(randomProduct.id);
-      }
-    }
-  }
- 
-  console.log('Seeded wishlists');
-}
 
-async function seedFavorites(clientUsers: UserWithClient[], products: Product[]): Promise<void> {
-  console.log('Seeding favorites...');
- 
-  interface FavoriteData {
-    clientId: string;
-    productId: string;
-  }
-  
-  const favorites: FavoriteData[] = [];
- 
-  for (let i = 0; i < 30; i++) {
-    const randomClient = clientUsers[Math.floor(Math.random() * clientUsers.length)];
-    const randomProduct = products[Math.floor(Math.random() * products.length)];
-   
-    // Éviter les doublons
-    const existingFavorite = favorites.find((f: FavoriteData) => f.clientId === randomClient.client.id && f.productId === randomProduct.id);
-    if (existingFavorite) continue;
-   
-    try {
-      await prisma.favorite.create({
-        data: {
-          clientId: randomClient.client.id,
-          productId: randomProduct.id
-        }
-      });
-      
-      favorites.push({
-        clientId: randomClient.client.id,
-        productId: randomProduct.id
-      });
-    } catch (error) {
-      // Ignorer les erreurs de contrainte unique
-      continue;
-    }
-  }
- 
-  console.log(`Seeded ${favorites.length} favorites`);
-}
-
-async function seedSliders(): Promise<void> {
-  console.log('Seeding sliders...');
- 
-  const slidersData = [
-    {
-      title: 'Nouvelle Collection Été',
-      subtitle: 'Découvrez nos dernières tendances',
-      buttonText: 'Voir la collection',
-      buttonLink: '/collections/ete',
-      sortOrder: 1
-    },
-    {
-      title: 'Soldes jusqu\'à -50%',
-      subtitle: 'Profitez de nos meilleures offres',
-      buttonText: 'Voir les soldes',
-      buttonLink: '/soldes',
-      sortOrder: 2
-    },
-    {
-      title: 'Livraison Gratuite',
-      subtitle: 'Dès 50€ d\'achat',
-      buttonText: 'En savoir plus',
-      buttonLink: '/livraison',
-      sortOrder: 3
-    }
-  ];
- 
-  for (const sliderData of slidersData) {
-    await prisma.slider.create({
-      data: {
-        ...sliderData,
-        image: `https://example.com/sliders/slide-${sliderData.sortOrder}.jpg`
-      }
-    });
-  }
- 
-  console.log(`Seeded ${slidersData.length} sliders`);
-}
-
-async function seedNewsletterSubscribers(): Promise<void> {
-  console.log('Seeding newsletter subscribers...');
- 
-  const firstNames = ['Antoine', 'Julie', 'Maxime', 'Clara', 'Romain', 'Manon', 'Julien', 'Océane'];
- 
-  for (let i = 0; i < 20; i++) {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-   
-    await prisma.newsletterSubscriber.create({
-      data: {
-        email: `${firstName.toLowerCase()}${i}@example.com`,
-        firstName: firstName,
-        isActive: Math.random() > 0.1 // 90% actifs
-      }
-    });
-  }
- 
-  console.log(`Seeded 20 newsletter subscribers`);
-}
-
-async function seedCoupons(): Promise<void> {
-  console.log('Seeding coupons...');
- 
-  const couponsData = [
-    {
-      code: 'WELCOME10',
-      description: 'Réduction de 10% pour les nouveaux clients',
-      discountType: 'PERCENTAGE',
-      discountValue: 10,
-      minOrderAmount: 50,
-      maxUses: 100,
-      usedCount: Math.floor(Math.random() * 25),
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31')
-    },
-    {
-      code: 'SUMMER20',
-      description: 'Soldes d\'été -20%',
-      discountType: 'PERCENTAGE',
-      discountValue: 20,
-      minOrderAmount: 75,
-      maxUses: 500,
-      usedCount: Math.floor(Math.random() * 150),
-      startDate: new Date('2024-06-01'),
-      endDate: new Date('2024-08-31')
-    },
-    {
-      code: 'FREE15',
-      description: 'Réduction fixe de 15€',
-      discountType: 'FIXED_AMOUNT',
-      discountValue: 15,
-      minOrderAmount: 100,
-      maxUses: 200,
-      usedCount: Math.floor(Math.random() * 50),
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31')
-    },
-    {
-      code: 'BLACKFRIDAY50',
-      description: 'Black Friday -50%',
-      discountType: 'PERCENTAGE',
-      discountValue: 50,
-      minOrderAmount: 200,
-      maxUses: 1000,
-      usedCount: Math.floor(Math.random() * 800),
-      startDate: new Date('2024-11-29'),
-      endDate: new Date('2024-12-02'),
-      isActive: false // Expiré
-    }
-  ];
- 
-  for (const couponData of couponsData) {
-    await prisma.coupon.create({
-      data: couponData
-    });
-  }
- 
-  console.log(`Seeded ${couponsData.length} coupons`);
-}
 
 async function cleanupDatabase(): Promise<void> {
   console.log('Starting database cleanup...');
@@ -842,10 +733,5 @@ export {
   seedCarts,
   seedOrders,
   seedReviews,
-  seedWishlists,
-  seedFavorites,
-  seedSliders,
-  seedNewsletterSubscribers,
-  seedCoupons,
   cleanupDatabase
 };

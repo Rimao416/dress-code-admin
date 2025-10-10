@@ -2,22 +2,38 @@
 import { Product, CreateProductData, UpdateProductData } from '@/types/product.type';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
-
+interface GetProductsOptions {
+  categoryId?: string;
+  brandId?: string;
+  featured?: boolean;
+  search?: string;
+}
 // Obtenir tous les produits
-export const getProducts = async (): Promise<Product[]> => {
+export const getProducts = async (options?: GetProductsOptions): Promise<Product[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/products`);
-   
+    const params = new URLSearchParams();
+    if (options?.categoryId) params.append('categoryId', options.categoryId);
+    if (options?.brandId) params.append('brandId', options.brandId);
+    if (options?.featured !== undefined) params.append('featured', String(options.featured));
+    if (options?.search) params.append('search', options.search);
+
+    const response = await fetch(`${API_BASE_URL}/products?${params}`);
+    
     if (!response.ok) {
       throw new Error(`Échec de la récupération des produits: ${response.statusText}`);
     }
-   
-    return await response.json();
+
+    const data = await response.json();
+    console.log('Réponse brute de l’API produits:', data);
+
+    // ✅ Renvoyer directement le tableau
+    return data.products || [];
   } catch (error) {
     console.error('Erreur lors de la récupération des produits:', error);
     throw error;
   }
 };
+
 
 // Obtenir un produit par ID
 export const getProductById = async (id: string): Promise<Product> => {
