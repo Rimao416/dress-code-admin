@@ -7,7 +7,7 @@ export const variantSchema = z.object({
   quantity: z.number().min(0, 'La quantité doit être positive'),
 });
 
-// Schéma pour le formulaire (avec File[])
+// Schéma pour le formulaire (avec subcategoryId optionnel)
 export const productSchema = z.object({
   name: z.string()
     .min(1, 'Le nom du produit est requis')
@@ -24,7 +24,7 @@ export const productSchema = z.object({
     .max(999999.99, 'Le prix ne peut pas dépasser 999 999,99'),
    
   categoryId: z.string().min(1, 'La catégorie est requise'),
-  subcategoryId: z.string().optional(),
+  subcategoryId: z.string().optional(), // ✅ Ajouté ici
   variants: z.array(variantSchema).min(1, 'Au moins une variante est requise'),
   stock: z.number().min(0, 'Le stock ne peut pas être négatif'),
   available: z.boolean(),

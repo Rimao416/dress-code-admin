@@ -13,7 +13,6 @@ import { useProduct } from '@/hooks/products/useProduct'
 import { useCategories } from '@/hooks/categories/useCategories'
 import { useTheme } from '@/context/ThemeContext'
 import { updateProduct } from '@/services/product.service'
-import { useSubCategories } from '@/hooks/subCategories/useSubCategories'
 
 // Interface étendue pour inclure les URLs Cloudinary (même que dans add-product)
 interface ExtendedProductFormData extends ProductFormData {
@@ -45,9 +44,8 @@ export default function EditProductPage() {
     status,
   } = useProduct(productId)
 
-  // Récupération des catégories et sous-catégories
+  // Récupération des catégories (qui incluent aussi les sous-catégories)
   const { data: categories = [] } = useCategories()
-  const { data: subcategories = [] } = useSubCategories()
  
   // Gestion des erreurs de chargement
   useEffect(() => {
@@ -76,18 +74,17 @@ export default function EditProductPage() {
       
       console.log('Images URLs finales:', finalImageUrls);
 
-      // Préparer les données de mise à jour avec les URLs Cloudinary
+      // Préparer les données de mise à jour avec les champs du formulaire
       const productUpdateData: UpdateProductData = {
         id: productId,
         name: data.name,
         description: data.description,
         price: data.price,
         categoryId: data.categoryId,
-        subcategoryId: data.subcategoryId || null,
         stock: data.stock,
         available: data.available,
-        variants: data.variants || [],
-        images: finalImageUrls // Utiliser les URLs Cloudinary
+        images: finalImageUrls,
+        sku: product.sku, // Conserver le SKU existant
       }
       
       console.log('Données envoyées à l\'API:', productUpdateData);
@@ -104,16 +101,18 @@ export default function EditProductPage() {
         description: updatedProduct.description,
         price: updatedProduct.price,
         categoryId: updatedProduct.categoryId,
-        subcategoryId: updatedProduct.subcategoryId,
         stock: updatedProduct.stock,
         available: updatedProduct.available,
-        variants: updatedProduct.variants || [],
+        sku: updatedProduct.sku,
         images: updatedProduct.images || [],
+        slug: updatedProduct.slug || '',
         createdAt: new Date(updatedProduct.createdAt),
-        category: {
-          id: categoryData?.id || updatedProduct.categoryId,
-          name: categoryData?.name || 'Unknown Category'
-        }
+        updatedAt: new Date(updatedProduct.updatedAt),
+        category: categoryData ? {
+          id: categoryData.id,
+          name: categoryData.name,
+          slug: categoryData.slug,
+        } : undefined,
       }
    
       // Mise à jour du cache React Query
@@ -185,12 +184,7 @@ export default function EditProductPage() {
               initialData={product}
               isSubmitting={isSubmitting}
               submitButtonText='Mettre à jour le produit'
-              categories={categories.map(cat => ({ id: cat.id, name: cat.name }))}
-              subcategories={subcategories.map(sub => ({
-                id: sub.id,
-                name: sub.name,
-                categoryId: sub.categoryId
-              }))}
+              categories={categories}
             />
           )}
         </div>

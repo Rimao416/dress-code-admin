@@ -1,9 +1,10 @@
-// components/forms/ProductForm.tsx (version complète avec Cloudinary)
+// components/forms/ProductForm.tsx (version corrigée)
 'use client'
 import { useState, useEffect } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Product } from '@/types/product.type'
+import { Category } from '@/types/category.type'
 import { useTheme } from '@/context/ThemeContext'
 import { ChevronLeft, ChevronRight, Upload, X, Plus, Check, Loader2 } from 'lucide-react'
 import FormField from '../ui/formfield'
@@ -19,8 +20,7 @@ interface ProductFormProps {
   initialData?: Product;
   isSubmitting: boolean;
   submitButtonText: string;
-  categories: Array<{ id: string; name: string }>;
-  subcategories: Array<{ id: string; name: string; categoryId: string }>;
+  categories: Category[]; // ✅ Utiliser le type Category complet
 }
 
 const STEPS = [
@@ -60,8 +60,7 @@ export default function ProductForm({
   initialData,
   isSubmitting,
   submitButtonText,
-  categories,
-  subcategories
+  categories
 }: ProductFormProps) {
   const { isDarkMode } = useTheme();
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,199 +86,158 @@ export default function ProductForm({
   });
 
   const watchedCategoryId = watch('categoryId');
+  const watchedSubcategoryId = watch('subcategoryId');
   const watchedValues = watch();
 
-  const filteredSubcategories = subcategories.filter(
-    sub => sub.categoryId === watchedCategoryId
-  );
+  // ✅ Filtrer les catégories parentes (sans parentId)
+  const parentCategories = categories.filter(cat => !cat.parentId);
+  
+  // ✅ Filtrer les sous-catégories en fonction de la catégorie sélectionnée
+  const subcategories = watchedCategoryId 
+    ? categories.filter(cat => cat.parentId === watchedCategoryId)
+    : [];
 
   useEffect(() => {
-    if (initialData) {
-      setValue('name', initialData.name);
-      setValue('description', initialData.description);
-      setValue('price', initialData.price);
-      setValue('categoryId', initialData.categoryId);
-      setValue('stock', initialData.stock);
-      setValue('available', initialData.available);
-     
-      if (initialData.variants.length > 0) {
-        setVariants(initialData.variants);
-        setValue('variants', initialData.variants);
-      }
-      
-      // Gérer les images existantes
-      if (initialData.images && initialData.images.length > 0) {
-        const existingImages: ImageUploadState[] = initialData.images.map(url => ({
-          file: new File([], 'existing'),
-          preview: url,
-          uploading: false,
-          uploaded: true,
-          cloudinaryUrl: url,
-          progress: 100
+    if (!initialData) return;
+
+    setValue('name', initialData.name);
+    setValue('description', initialData.description);
+    setValue('price', initialData.price);
+    setValue('categoryId', initialData.categoryId);
+    setValue('stock', typeof initialData.stock === 'number' ? initialData.stock : 0);
+    setValue('available', typeof initialData.available === 'boolean' ? initialData.available : true);
+   
+    if (Array.isArray(initialData.variants) && initialData.variants.length > 0) {
+      const mappedVariants = initialData.variants
+        .filter(v => v.size && v.color)
+        .map(v => ({
+          size: v.size as string,
+          color: v.color as string,
+          quantity: v.stock || 0
         }));
-        setImageStates(existingImages);
+      
+      if (mappedVariants.length > 0) {
+        setVariants(mappedVariants);
+        setValue('variants', mappedVariants);
       }
+    }
+    
+    if (Array.isArray(initialData.images) && initialData.images.length > 0) {
+      const existingImages: ImageUploadState[] = initialData.images.map(url => ({
+        file: new File([], 'existing'),
+        preview: url,
+        uploading: false,
+        uploaded: true,
+        cloudinaryUrl: url,
+        progress: 100
+      }));
+      setImageStates(existingImages);
     }
   }, [initialData, setValue]);
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = Array.from(e.target.files || []);
-  if (files.length === 0) return;
-  
-  // Créer les états pour les nouvelles images SANS les uploader
-  const newImageStates: ImageUploadState[] = files.map(file => ({
-    file,
-    preview: URL.createObjectURL(file),
-    uploading: false,
-    uploaded: false, // Important: pas encore uploadé
-    progress: 0
-  }));
-  
-  setImageStates(prev => [...prev, ...newImageStates]);
-};
-const uploadAllImages = async (): Promise<string[]> => {
-  const imagesToUpload = imageStates.filter(state => !state.uploaded && !state.error);
-  
-  if (imagesToUpload.length === 0) {
-    // Retourner les URLs des images déjà uploadées
-    return imageStates
-      .filter(state => state.uploaded && state.cloudinaryUrl)
-      .map(state => state.cloudinaryUrl!);
-  }
-
-  setIsUploadingImages(true);
-  
-const uploadPromises = imagesToUpload.map(async (imageState) => {
-    const actualIndex = imageStates.findIndex(state => state === imageState);
-    
-    setImageStates(prev => prev.map((state, i) =>
-      i === actualIndex ? { ...state, uploading: true } : state
-    ));
-
-    try {
-      const result = await CloudinaryService.uploadImageWithProgress(
-        imageState.file,
-        (progress) => {
-          setImageStates(prev => prev.map((state, i) =>
-            i === actualIndex ? { ...state, progress } : state
-          ));
-        }
-      );
-
-      setImageStates(prev => prev.map((state, i) =>
-        i === actualIndex ? {
-          ...state,
-          uploading: false,
-          uploaded: true,
-          cloudinaryUrl: result.secure_url,
-          progress: 100
-        } : state
-      ));
-
-      return result.secure_url;
-    } catch (error) {
-      setImageStates(prev => prev.map((state, i) =>
-        i === actualIndex ? {
-          ...state,
-          uploading: false,
-          error: error instanceof Error ? error.message : 'Upload failed'
-        } : state
-      ));
-      throw error;
+  // ✅ Réinitialiser subcategoryId quand on change de catégorie
+  useEffect(() => {
+    if (watchedCategoryId) {
+      setValue('subcategoryId', undefined);
     }
-  });
+  }, [watchedCategoryId, setValue]);
 
-  try {
-    const uploadedUrls = await Promise.all(uploadPromises);
-    setIsUploadingImages(false);
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
-    // Retourner toutes les URLs (nouvelles + anciennes)
-    const existingUrls = imageStates
-      .filter(state => state.uploaded && state.cloudinaryUrl && !imagesToUpload.includes(state))
-      .map(state => state.cloudinaryUrl!);
+    const newImageStates: ImageUploadState[] = files.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      uploading: false,
+      uploaded: false,
+      progress: 0
+    }));
     
-    return [...existingUrls, ...uploadedUrls];
-  } catch (error) {
-    setIsUploadingImages(false);
-    throw error;
-  }
-};
+    setImageStates(prev => [...prev, ...newImageStates]);
+  };
 
-  const uploadSingleImage = async (index: number, file: File) => {
-    // Marquer comme en cours d'upload
-    setImageStates(prev => prev.map((state, i) =>
-      i === index ? { ...state, uploading: true, error: undefined } : state
-    ));
+  const uploadAllImages = async (): Promise<string[]> => {
+    const imagesToUpload = imageStates.filter(state => !state.uploaded && !state.error);
+    
+    if (imagesToUpload.length === 0) {
+      return imageStates
+        .filter(state => state.uploaded && state.cloudinaryUrl)
+        .map(state => state.cloudinaryUrl!);
+    }
+
+    setIsUploadingImages(true);
+    
+    const uploadPromises = imagesToUpload.map(async (imageState) => {
+      const actualIndex = imageStates.findIndex(state => state === imageState);
+      
+      setImageStates(prev => prev.map((state, i) =>
+        i === actualIndex ? { ...state, uploading: true } : state
+      ));
+
+      try {
+        const result = await CloudinaryService.uploadImageWithProgress(
+          imageState.file,
+          (progress) => {
+            setImageStates(prev => prev.map((state, i) =>
+              i === actualIndex ? { ...state, progress } : state
+            ));
+          }
+        );
+
+        setImageStates(prev => prev.map((state, i) =>
+          i === actualIndex ? {
+            ...state,
+            uploading: false,
+            uploaded: true,
+            cloudinaryUrl: result.secure_url,
+            progress: 100
+          } : state
+        ));
+
+        return result.secure_url;
+      } catch (error) {
+        setImageStates(prev => prev.map((state, i) =>
+          i === actualIndex ? {
+            ...state,
+            uploading: false,
+            error: error instanceof Error ? error.message : 'Upload failed'
+          } : state
+        ));
+        throw error;
+      }
+    });
 
     try {
-      const result = await CloudinaryService.uploadImageWithProgress(
-        file,
-        (progress) => {
-          setImageStates(prev => prev.map((state, i) =>
-            i === index ? { ...state, progress } : state
-          ));
-        }
-      );
-
-      // Marquer comme uploadé avec succès
-      setImageStates(prev => prev.map((state, i) =>
-        i === index ? {
-          ...state,
-          uploading: false,
-          uploaded: true,
-          cloudinaryUrl: result.secure_url,
-          progress: 100
-        } : state
-      ));
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setIsUploadingImages(false);
+      
+      const existingUrls = imageStates
+        .filter(state => state.uploaded && state.cloudinaryUrl && !imagesToUpload.includes(state))
+        .map(state => state.cloudinaryUrl!);
+      
+      return [...existingUrls, ...uploadedUrls];
     } catch (error) {
-      // Marquer l'erreur
-      setImageStates(prev => prev.map((state, i) =>
-        i === index ? {
-          ...state,
-          uploading: false,
-          uploaded: false,
-          error: error instanceof Error ? error.message : 'Upload failed',
-          progress: 0
-        } : state
-      ));
-    } finally {
-      // Vérifier si tous les uploads sont terminés
-      setImageStates(prev => {
-        const allFinished = prev.every(state => !state.uploading);
-        if (allFinished) {
-          setIsUploadingImages(false);
-        }
-        return prev;
-      });
+      setIsUploadingImages(false);
+      throw error;
     }
   };
 
   const removeImage = async (index: number) => {
     const imageState = imageStates[index];
    
-    // Supprimer de Cloudinary si l'image a été uploadée
     if (imageState.uploaded && imageState.cloudinaryUrl) {
-      // Extraire le public_id de l'URL Cloudinary
       const publicId = imageState.cloudinaryUrl.split('/').pop()?.split('.')[0];
       if (publicId) {
         await CloudinaryService.deleteImage(publicId);
       }
     }
 
-    // Révoquer l'URL de prévisualisation
     if (imageState.preview.startsWith('blob:')) {
       URL.revokeObjectURL(imageState.preview);
     }
 
-    // Supprimer de l'état
     setImageStates(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const retryImageUpload = (index: number) => {
-    const imageState = imageStates[index];
-    if (imageState.file && !imageState.uploaded) {
-      uploadSingleImage(index, imageState.file);
-    }
   };
 
   const addVariant = () => {
@@ -295,83 +253,80 @@ const uploadPromises = imagesToUpload.map(async (imageState) => {
       setValue('variants', newVariants);
     }
   };
-interface ProductVariant {
-  size: string;
-  color: string;
-  quantity: number;
-}
-const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
+
+  interface ProductVariant {
+    size: string;
+    color: string;
+    quantity: number;
+  }
+
+  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
     const newVariants = [...variants];
     newVariants[index] = { ...newVariants[index], [field]: value };
     setVariants(newVariants);
     setValue('variants', newVariants);
   };
 
-  // Modifier la fonction de soumission pour inclure les URLs Cloudinary
-const handleFormSubmit: SubmitHandler<ProductFormData> = async (data: ProductFormData) => {
-  try {
-    // Upload toutes les images d'abord
-    const uploadedImageUrls = await uploadAllImages();
-   
-    if (uploadedImageUrls.length === 0) {
-      alert('Veuillez ajouter au moins une image');
-      return;
+  const handleFormSubmit: SubmitHandler<ProductFormData> = async (data: ProductFormData) => {
+    try {
+      const uploadedImageUrls = await uploadAllImages();
+     
+      if (uploadedImageUrls.length === 0) {
+        alert('Veuillez ajouter au moins une image');
+        return;
+      }
+
+      const formDataWithImages = {
+        ...data,
+        imageUrls: uploadedImageUrls
+      };
+
+      await onSubmit(formDataWithImages);
+     
+      if (!initialData) {
+        reset();
+        setCurrentStep(1);
+        setImageStates([]);
+        setVariants([{ size: '', color: '', quantity: 0 }]);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'upload des images:', error);
+      alert('Erreur lors de l\'upload des images. Veuillez réessayer.');
     }
+  };
 
-    // Ajouter les URLs des images aux données du formulaire
-    const formDataWithImages = {
-      ...data,
-      imageUrls: uploadedImageUrls
-    };
-
-    await onSubmit(formDataWithImages);
-   
-    if (!initialData) {
-      reset();
-      setCurrentStep(1);
-      setImageStates([]);
-      setVariants([{ size: '', color: '', quantity: 0 }]);
+  const canProceedToNextStep = () => {
+    if (currentStep === 1) {
+      const hasImages = imageStates.length > 0;
+      return hasImages && !isUploadingImages;
     }
-  } catch (error) {
-    console.error('Erreur lors de l\'upload des images:', error);
-    alert('Erreur lors de l\'upload des images. Veuillez réessayer.');
-  }
-};
+    return true;
+  };
 
-  // Fonction pour vérifier si on peut passer à l'étape suivante
- const canProceedToNextStep = () => {
-  if (currentStep === 1) {
-    // Vérifier qu'il y a au moins une image sélectionnée
-    const hasImages = imageStates.length > 0;
-    return hasImages && !isUploadingImages;
-  }
-  return true;
-};
-
-const nextStep = async () => {
-  let fieldsToValidate: (keyof ProductFormData)[] = [];
- 
-  switch (currentStep) {
-    case 1:
-      fieldsToValidate = ['name', 'description', 'price'];
-      break;
-    case 2:
-      fieldsToValidate = ['categoryId'];
-      break;
-    case 3:
-      fieldsToValidate = ['variants'];
-      break;
-  }
-  
-  const isValid = await trigger(fieldsToValidate);
-  const canProceed = canProceedToNextStep();
- 
-  if (isValid && canProceed && currentStep < 4) {
-    setCurrentStep(currentStep + 1);
-  } else if (!canProceed) {
-    alert('Veuillez sélectionner au moins une image');
-  }
-};
+  const nextStep = async () => {
+    let fieldsToValidate: (keyof ProductFormData)[] = [];
+   
+    switch (currentStep) {
+      case 1:
+        fieldsToValidate = ['name', 'description', 'price'];
+        break;
+      case 2:
+        fieldsToValidate = ['categoryId'];
+        break;
+      case 3:
+        fieldsToValidate = ['variants'];
+        break;
+    }
+    
+    const isValid = await trigger(fieldsToValidate);
+    const canProceed = canProceedToNextStep();
+   
+    if (isValid && canProceed && currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    } else if (!canProceed) {
+      alert('Veuillez sélectionner au moins une image');
+    }
+  };
 
   const prevStep = () => {
     if (currentStep > 1) {
@@ -420,109 +375,104 @@ const nextStep = async () => {
     </div>
   );
 
-  // Fonction pour rendre la section d'upload d'images
-const renderImageUploadSection = () => (
-  <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-    <FormField
-      label="Images du produit"
-      htmlFor="images"
-      // Supprime cette ligne qui cause l'erreur : error={errors.images?.message}
-      required
-    >
-      <div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
-        isDarkMode
-          ? 'border-slate-600 hover:border-indigo-500 bg-slate-700/20'
-          : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50'
-      }`}>
-        <input
-          id="images"
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleImageChange}
-          className="hidden"
-          disabled={isUploadingImages}
-        />
-        <label
-          htmlFor="images"
-          className={`cursor-pointer flex flex-col items-center justify-center space-y-2 ${
-            isDarkMode ? 'text-slate-400' : 'text-slate-600'
-          } ${isUploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          <Upload size={32} />
-          <span>
-            {isUploadingImages ? 'Upload en cours...' : 'Cliquez pour ajouter des images'}
-          </span>
-          <span className="text-sm">Maximum 10 images</span>
-        </label>
-      </div>
-     
-      {imageStates.length > 0 && (
-        <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-          {imageStates.map((imageState, index) => (
-            <div key={index} className={`relative group border rounded-lg overflow-hidden ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`}>
-           <Image
-  src={imageState.preview}
-  alt={`Aperçu ${index + 1}`}
-  width={96}
-  height={96}
-  className="w-full h-24 object-cover"
-  unoptimized={imageState.preview.startsWith('blob:')}
-/>
-             
-              {/* Overlay de statut */}
-              {imageState.uploading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <Loader2 size={20} className="animate-spin mx-auto mb-1" />
-                    <div className="text-xs">{imageState.progress}%</div>
+  const renderImageUploadSection = () => (
+    <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+      <FormField
+        label="Images du produit"
+        htmlFor="images"
+        required
+      >
+        <div className={`border-2 border-dashed rounded-xl p-6 transition-all duration-200 ${
+          isDarkMode
+            ? 'border-slate-600 hover:border-indigo-500 bg-slate-700/20'
+            : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50'
+        }`}>
+          <input
+            id="images"
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+            disabled={isUploadingImages}
+          />
+          <label
+            htmlFor="images"
+            className={`cursor-pointer flex flex-col items-center justify-center space-y-2 ${
+              isDarkMode ? 'text-slate-400' : 'text-slate-600'
+            } ${isUploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Upload size={32} />
+            <span>
+              {isUploadingImages ? 'Upload en cours...' : 'Cliquez pour ajouter des images'}
+            </span>
+            <span className="text-sm">Maximum 10 images</span>
+          </label>
+        </div>
+       
+        {imageStates.length > 0 && (
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+            {imageStates.map((imageState, index) => (
+              <div key={index} className={`relative group border rounded-lg overflow-hidden ${isDarkMode ? 'border-slate-600' : 'border-slate-200'}`}>
+                <Image
+                  src={imageState.preview}
+                  alt={`Aperçu ${index + 1}`}
+                  width={96}
+                  height={96}
+                  className="w-full h-24 object-cover"
+                  unoptimized={imageState.preview.startsWith('blob:')}
+                />
+               
+                {imageState.uploading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <Loader2 size={20} className="animate-spin mx-auto mb-1" />
+                      <div className="text-xs">{imageState.progress}%</div>
+                    </div>
                   </div>
-                </div>
-              )}
-             
-              {imageState.error && (
-                <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
-                  <button
-                    onClick={() => retryImageUpload(index)}
-                    className="text-white text-xs bg-white/20 px-2 py-1 rounded"
-                  >
-                    Réessayer
-                  </button>
-                </div>
-              )}
-             
-              {imageState.uploaded && (
-                <div className="absolute top-1 left-1 bg-green-500 text-white rounded-full p-1">
-                  <Check size={10} />
-                </div>
-              )}
-             
-              {/* Bouton de suppression */}
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                disabled={imageState.uploading}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-     
-      {/* Barre de progression globale */}
-      {isUploadingImages && (
-        <div className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-          <div className="flex items-center space-x-2">
-            <Loader2 size={16} className="animate-spin" />
-            <span className="text-sm">Upload des images en cours...</span>
+                )}
+               
+                {imageState.error && (
+                  <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center">
+                    <button
+                      onClick={() => {}}
+                      className="text-white text-xs bg-white/20 px-2 py-1 rounded"
+                    >
+                      Réessayer
+                    </button>
+                  </div>
+                )}
+               
+                {imageState.uploaded && (
+                  <div className="absolute top-1 left-1 bg-green-500 text-white rounded-full p-1">
+                    <Check size={10} />
+                  </div>
+                )}
+               
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  disabled={imageState.uploading}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-    </FormField>
-  </div>
-);
+        )}
+       
+        {isUploadingImages && (
+          <div className={`mt-4 p-3 rounded-lg ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
+            <div className="flex items-center space-x-2">
+              <Loader2 size={16} className="animate-spin" />
+              <span className="text-sm">Upload des images en cours...</span>
+            </div>
+          </div>
+        )}
+      </FormField>
+    </div>
+  );
 
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -590,14 +540,14 @@ const renderImageUploadSection = () => (
         required
       >
         <Select
-          options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+          options={parentCategories.map(cat => ({ value: cat.id, label: cat.name }))}
           value={watchedCategoryId}
           onValueChange={(value) => setValue('categoryId', value)}
           placeholder="Sélectionnez une catégorie"
         />
       </FormField>
 
-      {filteredSubcategories.length > 0 && (
+      {subcategories.length > 0 && (
         <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
           <FormField
             label="Sous-catégorie"
@@ -605,8 +555,8 @@ const renderImageUploadSection = () => (
             error={errors.subcategoryId?.message}
           >
             <Select
-              options={filteredSubcategories.map(sub => ({ value: sub.id, label: sub.name }))}
-              value={watch('subcategoryId') || ''}
+              options={subcategories.map(sub => ({ value: sub.id, label: sub.name }))}
+              value={watchedSubcategoryId || ''}
               onValueChange={(value) => setValue('subcategoryId', value)}
               placeholder="Sélectionnez une sous-catégorie (optionnel)"
             />
@@ -755,7 +705,8 @@ const renderImageUploadSection = () => (
       </div>
     </div>
   );
- const renderStep4 = () => (
+
+  const renderStep4 = () => (
     <div className="space-y-6">
       <h4 className={`text-lg font-semibold mb-4 pb-4 border-b ${isDarkMode ? 'text-white border-slate-700' : 'text-slate-800 border-slate-200'}`}>
         Résumé du produit
@@ -797,7 +748,7 @@ const renderImageUploadSection = () => (
               <div className={`py-2 px-3 rounded ${isDarkMode ? 'bg-slate-700/50' : 'bg-white'}`}>
                 <strong>Catégorie:</strong><br />
                 <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>
-                  {categories.find(c => c.id === watchedValues.categoryId)?.name}
+                  {parentCategories.find(c => c.id === watchedValues.categoryId)?.name}
                 </span>
               </div>
               {watchedValues.subcategoryId && (
