@@ -1,53 +1,75 @@
-// types/product.type.ts
-
-export type VariantBase = {
-  size: string;
-  color: string;
-  quantity: number;
-};
-
-export type Variant = VariantBase & {
-  id: string;
-  productId: string;
-};
+// =============================================
+// 1. TYPES - types/product.type.ts
+// =============================================
 
 export type ProductBase = {
   name: string;
   description: string;
+  shortDescription?: string | null;
   price: number;
+  comparePrice?: number | null;
   images: string[];
   categoryId: string;
-  subcategoryId?: string;
-  stock: number;
-  available: boolean;
+  brandId?: string | null;
+  sku: string;
+  stock?: number;
+  available?: boolean;
+  featured?: boolean;
+  isNewIn?: boolean;
+  tags?: string[];
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  weight?: number | null;
+  dimensions?: JSON | null;
 };
 
 export type Product = ProductBase & {
   id: string;
+  slug: string;
   createdAt: string | Date;
-  category: {
-    id: string;
-    name: string;
+  updatedAt: string | Date;
+  category?: Category;
+  brand?: Brand | null;
+  variants?: ProductVariant[];
+  _count?: {
+    variants: number;
+    reviews: number;
+    orderItems: number;
   };
-  variants: Variant[];
 };
 
-export type ProductFormData = {
-  name: string;
-  description: string;
-  price: number;
-  images: File[];
-  categoryId: string;
-  subcategoryId?: string | null; // Accepter null ET undefined
-  variants: VariantBase[];
-  stock: number;
-  available: boolean;
-};
+export type ProductFormData = ProductBase;
 
-export type CreateProductData = Omit<ProductFormData, 'images'> & {
-  images: string[];
-};
+export type CreateProductData = ProductBase;
 
-export type UpdateProductData = CreateProductData & {
+export type UpdateProductData = ProductBase & {
   id: string;
+};
+
+export type ProductVariant = {
+  id: string;
+  productId: string;
+  size?: string | null;
+  color?: string | null;
+  colorHex?: string | null;
+  material?: string | null;
+  sku: string;
+  price?: number | null;
+  stock: number;
+  images: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type Brand = {
+  id: string;
+  name: string;
+  slug: string;
 };
