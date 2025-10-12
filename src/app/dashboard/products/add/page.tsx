@@ -64,17 +64,22 @@ export default function AddProductPage() {
       console.log('Images URLs:', data.imageUrls);
 
       // Préparer les données du produit avec les champs du formulaire
-      const productData: CreateProductData = {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        categoryId: data.categoryId,
-        stock: data.stock,
-        available: data.available,
-        images: data.imageUrls,
-        sku: generateSKU(data.name), // Générer un SKU unique
-      }
-
+ const productData: CreateProductData = {
+  name: data.name,
+  description: data.description,
+  price: data.price,
+  categoryId: data.categoryId,
+  subcategoryId: data.subcategoryId, // ✅ Plus d'erreur
+  stock: data.stock,
+  available: data.available,
+  images: data.imageUrls,
+  sku: generateSKU(data.name),
+  variants: data.variants.map(v => ({ // ✅ Plus d'erreur
+    size: v.size,
+    color: v.color,
+    quantity: v.quantity
+  }))
+}
       console.log('Données envoyées à l\'API:', productData);
       
       const newProduct = await createProduct(productData)

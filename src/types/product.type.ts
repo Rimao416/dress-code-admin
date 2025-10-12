@@ -10,6 +10,7 @@ export type ProductBase = {
   comparePrice?: number | null;
   images: string[];
   categoryId: string;
+  subcategoryId?: string; // ✅ Ajouté
   brandId?: string | null;
   sku: string;
   stock?: number;
@@ -23,12 +24,20 @@ export type ProductBase = {
   dimensions?: JSON | null;
 };
 
+// ✅ Nouveau type pour les variants du formulaire (différent de ProductVariant de la DB)
+export type FormVariant = {
+  size: string;
+  color: string;
+  quantity: number;
+};
+
 export type Product = ProductBase & {
   id: string;
   slug: string;
   createdAt: string | Date;
   updatedAt: string | Date;
   category?: Category;
+  subcategory?: Category; // ✅ Ajouté
   brand?: Brand | null;
   variants?: ProductVariant[];
   _count?: {
@@ -40,12 +49,17 @@ export type Product = ProductBase & {
 
 export type ProductFormData = ProductBase;
 
-export type CreateProductData = ProductBase;
+// ✅ CreateProductData accepte les variants du formulaire
+export type CreateProductData = ProductBase & {
+  variants?: FormVariant[]; // ✅ Ajouté
+};
 
 export type UpdateProductData = ProductBase & {
   id: string;
+  variants?: FormVariant[]; // ✅ Ajouté si nécessaire pour l'update
 };
 
+// Type pour les variants en base de données (reste inchangé)
 export type ProductVariant = {
   id: string;
   productId: string;
@@ -66,6 +80,7 @@ export type Category = {
   id: string;
   name: string;
   slug: string;
+  parentId?: string | null; // ✅ Ajouté pour supporter les sous-catégories
 };
 
 export type Brand = {
