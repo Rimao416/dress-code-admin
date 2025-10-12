@@ -1,6 +1,7 @@
 'use client';
 import { ManagementPageConfig } from "@/types/management.type";
 import { Product } from "@/types/product.type";
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -167,23 +168,26 @@ export default function ProductsPage() {
       label: 'Ajouter un produit',
       onClick: () => router.push('/dashboard/products/add'),
     },
-    actions: [
-      {
-        label: 'Voir',
-        variant: 'primary',
-        onClick: (id) => router.push(`/dashboard/products/${id}/view`),
-      },
-      {
-        label: 'Modifier',
-        variant: 'secondary',
-        onClick: (id) => router.push(`/dashboard/products/${id}/edit`),
-      },
-      {
-        label: 'Supprimer',
-        variant: 'danger',
-        onClick: (id) => handleDeleteClick(id),
-      },
-    ],
+actions: [
+  {
+    label: 'View',  // ← était 'Voir'
+    variant: 'primary',
+    icon: <Eye className="w-4 h-4" />,
+    onClick: (id) => router.push(`/dashboard/products/${id}/view`),
+  },
+  {
+    label: 'Edit',  // ← était 'Modifier'
+    variant: 'secondary',
+    icon: <Pencil className="w-4 h-4" />,
+    onClick: (id) => router.push(`/dashboard/products/${id}/edit`),
+  },
+  {
+    label: 'Delete',  // ← était 'Supprimer'
+    variant: 'danger',
+    icon: <Trash2 className="w-4 h-4" />,
+    onClick: (id) => handleDeleteClick(id),
+  },
+],
     filters: filterOptions,
   }), [products, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick]);
 
