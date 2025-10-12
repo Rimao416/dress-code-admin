@@ -13,7 +13,7 @@ export async function GET(
   try {
     const { id } = await params
 
-    const variants = await prisma.variant.findMany({
+    const variants = await prisma.productVariant.findMany({
       where: { productId: id }
     })
 
@@ -27,50 +27,3 @@ export async function GET(
   }
 }
 
-// POST /api/products/[id]/variants - Ajouter une variante à un produit
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-
-    const body = await request.json()
-    const validatedData = variantSchema.parse(body)
-
-    const productExists = await prisma.product.findUnique({
-      where: { id }
-    })
-
-    if (!productExists) {
-      return NextResponse.json(
-        { error: 'Produit non trouvé' },
-        { status: 404 }
-      )
-    }
-
-    const variant = await prisma.variant.create({
-      data: {
-        productId: id,
-        size: validatedData.size,
-        color: validatedData.color,
-        quantity: validatedData.quantity
-      }
-    })
-
-    return NextResponse.json(variant, { status: 201 })
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Données invalides', details: error.issues },
-        { status: 400 }
-      )
-    }
-
-    console.error('Erreur lors de la création de la variante:', error)
-    return NextResponse.json(
-      { error: 'Erreur lors de la création de la variante' },
-      { status: 500 }
-    )
-  }
-}
