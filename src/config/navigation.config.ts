@@ -20,8 +20,7 @@ export const NAVIGATION_CONFIG: Record<string, MenuItem[]> = {
       hasSubmenu: true,
       submenu: [
         { name: "Gestion des categories", path: "/dashboard/categories" },
-        { name: "Gestion des sous-categories", path: "/dashboard/sub-categories" },
-        { name: "Project Dashboard", path: "/dashboard/projects" },
+        { name: "Gestion des produits", path: "/dashboard/products" },
         { name: "CRM Dashboard", path: "/dashboard/crm" },
         { name: "Banking Dashboard", path: "/dashboard/banking" },
       ],
