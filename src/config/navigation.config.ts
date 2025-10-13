@@ -21,7 +21,7 @@ export const NAVIGATION_CONFIG: Record<string, MenuItem[]> = {
       submenu: [
         { name: "Gestion des categories", path: "/dashboard/categories" },
         { name: "Gestion des produits", path: "/dashboard/products" },
-        { name: "CRM Dashboard", path: "/dashboard/crm" },
+        { name: "Gestion des commandes", path: "/dashboard/orders" },
         { name: "Banking Dashboard", path: "/dashboard/banking" },
       ],
     },
