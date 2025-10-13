@@ -210,10 +210,10 @@ export default function OrdersPage() {
         },
       },
     ] as ColumnDef<Order>[],
-    addNewButton: {
-      label: 'Nouvelle commande',
-      onClick: () => router.push('/dashboard/orders/add'),
-    },
+    // addNewButton: {
+    //   label: 'Nouvelle commande',
+    //   onClick: () => router.push('/dashboard/orders/add'),
+    // },
     actions: [
       {
         label: 'View',
