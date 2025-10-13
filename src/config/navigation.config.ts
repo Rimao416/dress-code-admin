@@ -22,7 +22,7 @@ export const NAVIGATION_CONFIG: Record<string, MenuItem[]> = {
         { name: "Gestion des categories", path: "/dashboard/categories" },
         { name: "Gestion des produits", path: "/dashboard/products" },
         { name: "Gestion des commandes", path: "/dashboard/orders" },
-        { name: "Banking Dashboard", path: "/dashboard/banking" },
+        { name: "Gestion des marques", path: "/dashboard/brands" },
       ],
     },
   ],
