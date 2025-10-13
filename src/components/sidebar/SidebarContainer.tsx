@@ -63,10 +63,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <div className="ml-3 min-w-0">
               <p className={`text-sm font-medium truncate ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>John Doe</p>
+              }`}>Adminsitration</p>
               <p className={`text-xs truncate ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>john@example.com</p>
+              }`}>administration@dresscode.com</p>
             </div>
           )}
         </div>
