@@ -1,7 +1,3 @@
-// =============================================
-// app/dashboard/orders/page.tsx
-// =============================================
-
 'use client';
 
 import { ManagementPageConfig } from "@/types/management.type";
@@ -15,6 +11,8 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { useOrders } from "@/hooks/orders/useOrders";
 import ActionModal from "@/components/common/ActionModal";
 import { useDeleteOrder } from "@/hooks/orders/useDeleteOrder";
+import OrderStatusModal from "@/components/common/OrderStatusModal";
+import { useUpdateOrderStatus } from "@/hooks/orders/useUpdateOrderStatus";
 
 const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
@@ -38,14 +36,14 @@ const statusLabels: Record<OrderStatus, string> = {
 
 const paymentStatusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-  [PaymentStatus.PAID]: 'bg-green-100 text-green-800',
+  [PaymentStatus.COMPLETED]: 'bg-green-100 text-green-800',
   [PaymentStatus.FAILED]: 'bg-red-100 text-red-800',
   [PaymentStatus.REFUNDED]: 'bg-gray-100 text-gray-800',
 };
 
 const paymentStatusLabels: Record<PaymentStatus, string> = {
   [PaymentStatus.PENDING]: 'En attente',
-  [PaymentStatus.PAID]: 'Payée',
+  [PaymentStatus.COMPLETED]: 'Complétée',
   [PaymentStatus.FAILED]: 'Échouée',
   [PaymentStatus.REFUNDED]: 'Remboursée',
 };
@@ -54,6 +52,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const { data: orders, isLoading, isFetching, error, refetch } = useOrders();
   const { mutate: deleteOrders, isPending: isDeleting } = useDeleteOrder();
+  const { mutate: updateOrderStatus, isPending: isUpdatingStatus } = useUpdateOrderStatus();
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -63,6 +62,14 @@ export default function OrdersPage() {
     isOpen: false,
     orderIds: [],
     orderNumber: '',
+  });
+
+  const [statusModal, setStatusModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({
+    isOpen: false,
+    order: null,
   });
 
   const handleDeleteClick = useCallback((id: string) => {
@@ -89,9 +96,40 @@ export default function OrdersPage() {
     });
   };
 
-  const handleCloseModal = () => {
+  const handleCloseDeleteModal = () => {
     if (!isDeleting) {
       setDeleteModal({ isOpen: false, orderIds: [], orderNumber: '' });
+    }
+  };
+
+  const handleStatusClick = useCallback((id: string) => {
+    const order = orders?.find(o => o.id === id);
+    if (order) {
+      setStatusModal({
+        isOpen: true,
+        order: order,
+      });
+    }
+  }, [orders]);
+
+  const handleConfirmStatusUpdate = (orderId: string, status: OrderStatus, paymentStatus: PaymentStatus) => {
+    updateOrderStatus(
+      { orderId, status, paymentStatus },
+      {
+        onSuccess: () => {
+          setStatusModal({ isOpen: false, order: null });
+          console.log('Statut de la commande mis à jour avec succès');
+        },
+        onError: (error) => {
+          console.error('Erreur lors de la mise à jour du statut:', error);
+        },
+      }
+    );
+  };
+
+  const handleCloseStatusModal = () => {
+    if (!isUpdatingStatus) {
+      setStatusModal({ isOpen: false, order: null });
     }
   };
 
@@ -149,24 +187,34 @@ export default function OrdersPage() {
       {
         accessorKey: 'status',
         header: 'Statut',
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const status = getValue() as OrderStatus;
           return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
-              {statusLabels[status]}
-            </span>
+            <button
+              onClick={() => handleStatusClick(row.original.id)}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
+                {statusLabels[status]}
+              </span>
+            </button>
           );
         },
       },
       {
         accessorKey: 'paymentStatus',
         header: 'Paiement',
-        cell: ({ getValue }) => {
+        cell: ({ getValue, row }) => {
           const paymentStatus = getValue() as PaymentStatus;
           return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${paymentStatusColors[paymentStatus]}`}>
-              {paymentStatusLabels[paymentStatus]}
-            </span>
+            <button
+              onClick={() => handleStatusClick(row.original.id)}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${paymentStatusColors[paymentStatus]}`}>
+                {paymentStatusLabels[paymentStatus]}
+              </span>
+            </button>
           );
         },
       },
@@ -210,10 +258,6 @@ export default function OrdersPage() {
         },
       },
     ] as ColumnDef<Order>[],
-    // addNewButton: {
-    //   label: 'Nouvelle commande',
-    //   onClick: () => router.push('/dashboard/orders/add'),
-    // },
     actions: [
       {
         label: 'View',
@@ -235,7 +279,7 @@ export default function OrdersPage() {
       },
     ],
     filters: filterOptions,
-  }), [orders, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick]);
+  }), [orders, isLoading, isFetching, error, refetch, router, filterOptions, handleDeleteClick, handleStatusClick]);
 
   return (
     <DashboardLayout>
@@ -243,12 +287,20 @@ export default function OrdersPage() {
       
       <ActionModal
         isOpen={deleteModal.isOpen}
-        onClose={handleCloseModal}
+        onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
         itemName={deleteModal.orderNumber}
         itemCount={deleteModal.orderIds.length}
         isProcessing={isDeleting}
         actionType="delete"
+      />
+
+      <OrderStatusModal
+        isOpen={statusModal.isOpen}
+        onClose={handleCloseStatusModal}
+        order={statusModal.order}
+        onConfirm={handleConfirmStatusUpdate}
+        isLoading={isUpdatingStatus}
       />
     </DashboardLayout>
   );

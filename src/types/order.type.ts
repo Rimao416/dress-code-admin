@@ -1,7 +1,3 @@
-// =============================================
-// types/order.type.ts
-// =============================================
-
 export enum OrderStatus {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
@@ -41,8 +37,10 @@ export type Client = {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
   phone?: string | null;
+  user?: {
+    email: string;
+  };
 };
 
 export type OrderItem = {
@@ -60,11 +58,13 @@ export type OrderItem = {
     id: string;
     name: string;
     images: string[];
+    sku: string;
   };
   variant?: {
     id: string;
     size?: string | null;
     color?: string | null;
+    colorHex?: string | null;
   };
 };
 
@@ -124,22 +124,6 @@ export type OrderFormData = {
   }[];
   shippingAddressId: string;
   billingAddressId: string;
-  shippingCost?: number;
-  taxAmount?: number;
-  discountAmount?: number;
-  paymentMethod?: PaymentMethod;
-  notes?: string;
-};
-
-export type CreateOrderData = OrderFormData;
-
-export type UpdateOrderData = {
-  id: string;
-  status?: OrderStatus;
-  paymentStatus?: PaymentStatus;
-  paymentMethod?: PaymentMethod;
-  shippingCost?: number;
-  taxAmount?: number;
-  discountAmount?: number;
-  notes?: string;
+  paymentMethod: PaymentMethod;
+  notes?: string | null;
 };
