@@ -197,7 +197,7 @@ export default function ProductDetailsPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => router.push(`/dashboard/products/${productId}/edit-product`)}
+                  onClick={() => router.push(`/dashboard/products/${productId}/edit`)}
                   className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
                 >
                   <Edit size={16} />

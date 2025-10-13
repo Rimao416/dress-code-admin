@@ -1,3 +1,4 @@
+// pages/edit-product/[id]/page.tsx (version corrigée)
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -19,6 +20,16 @@ interface ExtendedProductFormData extends ProductFormData {
   imageUrls?: string[];
 }
 
+// Utilitaire pour générer un slug (même que dans add-product)
+const generateSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+};
+
 export default function EditProductPage() {
   const params = useParams()
   const router = useRouter()
@@ -33,7 +44,7 @@ export default function EditProductPage() {
   // Vérification de l'ID et redirection si invalide
   useEffect(() => {
     if (!productId) {
-      setMessage('Invalid product ID', 'error')
+      setMessage('ID produit invalide', 'error')
       router.push('/dashboard/products')
     }
   }, [productId, router, setMessage])
@@ -50,7 +61,7 @@ export default function EditProductPage() {
   // Gestion des erreurs de chargement
   useEffect(() => {
     if (status === 'error') {
-      setMessage('Product not found', 'error')
+      setMessage('Produit non trouvé', 'error')
       router.push('/dashboard/products')
     }
   }, [status, router, setMessage])
@@ -65,26 +76,31 @@ export default function EditProductPage() {
     setLoading(true)
  
     try {
-      // Vérifier que nous avons au moins une image (soit uploadée, soit existante)
-      const finalImageUrls = data.imageUrls || product.images || []
-      if (finalImageUrls.length === 0) {
+      // Vérifier que nous avons au moins une image uploadée
+      if (!data.imageUrls || data.imageUrls.length === 0) {
         console.error('Aucune image fournie');
         throw new Error('Au moins une image est requise pour le produit');
       }
       
-      console.log('Images URLs finales:', finalImageUrls);
+      console.log('Images URLs:', data.imageUrls);
 
-      // Préparer les données de mise à jour avec les champs du formulaire
+      // ✅ Préparer les données de mise à jour avec TOUS les champs du formulaire (comme add-product)
       const productUpdateData: UpdateProductData = {
         id: productId,
         name: data.name,
         description: data.description,
         price: data.price,
         categoryId: data.categoryId,
+        subcategoryId: data.subcategoryId, // ✅ Ajout de subcategoryId
         stock: data.stock,
         available: data.available,
-        images: finalImageUrls,
+        images: data.imageUrls,
         sku: product.sku, // Conserver le SKU existant
+        variants: data.variants.map(v => ({ // ✅ Ajout des variants
+          size: v.size,
+          color: v.color,
+          quantity: v.quantity
+        }))
       }
       
       console.log('Données envoyées à l\'API:', productUpdateData);
@@ -95,17 +111,19 @@ export default function EditProductPage() {
       // Récupérer la catégorie pour construire l'objet Product complet
       const categoryData = categories.find(cat => cat.id === updatedProduct.categoryId)
    
+      // ✅ Construction complète du produit formaté (comme add-product)
       const formattedProduct: Product = {
         id: updatedProduct.id,
         name: updatedProduct.name,
         description: updatedProduct.description,
         price: updatedProduct.price,
         categoryId: updatedProduct.categoryId,
+        subcategoryId: updatedProduct.subcategoryId, // ✅ Inclure subcategoryId
         stock: updatedProduct.stock,
         available: updatedProduct.available,
         sku: updatedProduct.sku,
         images: updatedProduct.images || [],
-        slug: updatedProduct.slug || '',
+        slug: updatedProduct.slug || generateSlug(updatedProduct.name),
         createdAt: new Date(updatedProduct.createdAt),
         updatedAt: new Date(updatedProduct.updatedAt),
         category: categoryData ? {
@@ -113,6 +131,7 @@ export default function EditProductPage() {
           name: categoryData.name,
           slug: categoryData.slug,
         } : undefined,
+        variants: updatedProduct.variants || [], // ✅ Inclure les variants
       }
    
       // Mise à jour du cache React Query
