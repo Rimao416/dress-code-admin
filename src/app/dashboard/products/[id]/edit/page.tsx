@@ -1,4 +1,4 @@
-// pages/edit-product/[id]/page.tsx (version corrigée)
+// pages/edit-product/[id]/page.tsx
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -15,12 +15,10 @@ import { useCategories } from '@/hooks/categories/useCategories'
 import { useTheme } from '@/context/ThemeContext'
 import { updateProduct } from '@/services/product.service'
 
-// Interface étendue pour inclure les URLs Cloudinary (même que dans add-product)
 interface ExtendedProductFormData extends ProductFormData {
   imageUrls?: string[];
 }
 
-// Utilitaire pour générer un slug (même que dans add-product)
 const generateSlug = (text: string): string => {
   return text
     .toLowerCase()
@@ -38,10 +36,10 @@ export default function EditProductPage() {
   const { setLoading, setError } = useProductStore()
   const { isDarkMode } = useTheme()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [processedProduct, setProcessedProduct] = useState<Product | null>(null)
  
   const productId = params.id as string
  
-  // Vérification de l'ID et redirection si invalide
   useEffect(() => {
     if (!productId) {
       setMessage('ID produit invalide', 'error')
@@ -55,16 +53,50 @@ export default function EditProductPage() {
     status,
   } = useProduct(productId)
 
-  // Récupération des catégories (qui incluent aussi les sous-catégories)
   const { data: categories = [] } = useCategories()
  
-  // Gestion des erreurs de chargement
   useEffect(() => {
     if (status === 'error') {
       setMessage('Produit non trouvé', 'error')
       router.push('/dashboard/products')
     }
   }, [status, router, setMessage])
+
+  // ✅ Traiter le produit pour déterminer categoryId et subcategoryId
+  useEffect(() => {
+    if (!product || categories.length === 0) return;
+
+    const categoryData = categories.find(cat => cat.id === product.categoryId);
+    
+    let finalCategoryId = product.categoryId;
+    let finalSubcategoryId: string | undefined = undefined;
+
+    // Si la catégorie chargée a un parentId, c'est une sous-catégorie
+    if (categoryData?.parentId) {
+      finalSubcategoryId = product.categoryId;
+      finalCategoryId = categoryData.parentId;
+    } else {
+      // Sinon, c'est une catégorie parente
+      finalCategoryId = product.categoryId;
+      finalSubcategoryId = undefined;
+    }
+
+    // Créer le produit traité avec les bonnes valeurs
+    const processed: Product = {
+      ...product,
+      categoryId: finalCategoryId,
+      // Ajouter subcategoryId s'il existe
+      ...(finalSubcategoryId && { subcategoryId: finalSubcategoryId }),
+    };
+
+    console.log('Produit traité:', {
+      categoryId: finalCategoryId,
+      subcategoryId: finalSubcategoryId,
+      originalCategoryId: product.categoryId,
+    });
+
+    setProcessedProduct(processed);
+  }, [product, categories]);
 
   const onSubmit = async (data: ExtendedProductFormData) => {
     console.log('=== DÉBUT MISE À JOUR ===');
@@ -76,7 +108,6 @@ export default function EditProductPage() {
     setLoading(true)
  
     try {
-      // Vérifier que nous avons au moins une image uploadée
       if (!data.imageUrls || data.imageUrls.length === 0) {
         console.error('Aucune image fournie');
         throw new Error('Au moins une image est requise pour le produit');
@@ -84,19 +115,21 @@ export default function EditProductPage() {
       
       console.log('Images URLs:', data.imageUrls);
 
-      // ✅ Préparer les données de mise à jour avec TOUS les champs du formulaire (comme add-product)
+      // ✅ Utiliser subcategoryId si fourni, sinon categoryId
+      const finalCategoryId = data.subcategoryId || data.categoryId;
+
       const productUpdateData: UpdateProductData = {
         id: productId,
         name: data.name,
         description: data.description,
         price: data.price,
-        categoryId: data.categoryId,
-        subcategoryId: data.subcategoryId, // ✅ Ajout de subcategoryId
+        categoryId: finalCategoryId,
+        subcategoryId: data.subcategoryId,
         stock: data.stock,
         available: data.available,
         images: data.imageUrls,
-        sku: product.sku, // Conserver le SKU existant
-        variants: data.variants.map(v => ({ // ✅ Ajout des variants
+        sku: product.sku,
+        variants: data.variants.map(v => ({
           size: v.size,
           color: v.color,
           quantity: v.quantity
@@ -108,17 +141,14 @@ export default function EditProductPage() {
       const updatedProduct = await updateProduct(productUpdateData)
       console.log('Produit mis à jour:', updatedProduct);
      
-      // Récupérer la catégorie pour construire l'objet Product complet
       const categoryData = categories.find(cat => cat.id === updatedProduct.categoryId)
    
-      // ✅ Construction complète du produit formaté (comme add-product)
       const formattedProduct: Product = {
         id: updatedProduct.id,
         name: updatedProduct.name,
         description: updatedProduct.description,
         price: updatedProduct.price,
         categoryId: updatedProduct.categoryId,
-        subcategoryId: updatedProduct.subcategoryId, // ✅ Inclure subcategoryId
         stock: updatedProduct.stock,
         available: updatedProduct.available,
         sku: updatedProduct.sku,
@@ -131,10 +161,9 @@ export default function EditProductPage() {
           name: categoryData.name,
           slug: categoryData.slug,
         } : undefined,
-        variants: updatedProduct.variants || [], // ✅ Inclure les variants
+        variants: updatedProduct.variants || [],
       }
    
-      // Mise à jour du cache React Query
       queryClient.setQueryData<Product[]>(['products'], (old = []) =>
         old ? old.map(p => p.id === productId ? formattedProduct : p) : []
       )
@@ -156,7 +185,6 @@ export default function EditProductPage() {
     }
   }
 
-  // État de chargement
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -189,7 +217,6 @@ export default function EditProductPage() {
           title='Gestion des produits'
         />
        
-        {/* Container principal avec support du thème sombre */}
         <div className={`
           rounded-lg p-6 shadow-sm transition-all duration-300
           ${isDarkMode
@@ -197,10 +224,10 @@ export default function EditProductPage() {
             : 'bg-white border border-gray-200 shadow-gray-100/50'
           }
         `}>
-          {product && (
+          {processedProduct && (
             <ProductForm
               onSubmit={onSubmit}
-              initialData={product}
+              initialData={processedProduct}
               isSubmitting={isSubmitting}
               submitButtonText='Mettre à jour le produit'
               categories={categories}

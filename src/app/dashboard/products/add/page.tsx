@@ -1,4 +1,4 @@
-// pages/add-product/page.tsx (version corrigée)
+// pages/add-product/page.tsx
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -14,19 +14,16 @@ import { useTheme } from '@/context/ThemeContext'
 import { useCategories } from '@/hooks/categories/useCategories'
 import { createProduct } from '@/services/product.service'
 
-// Interface étendue pour inclure les URLs Cloudinary
 interface ExtendedProductFormData extends ProductFormData {
   imageUrls?: string[];
 }
 
-// Utilitaire pour générer un SKU unique
 const generateSKU = (productName: string): string => {
   const timestamp = Date.now().toString(36).toUpperCase();
   const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `SKU-${timestamp}-${randomStr}`;
 };
 
-// Utilitaire pour générer un slug
 const generateSlug = (text: string): string => {
   return text
     .toLowerCase()
@@ -44,7 +41,6 @@ export default function AddProductPage() {
   const { isDarkMode } = useTheme()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Récupération des catégories (qui incluent les sous-catégories)
   const { data: categories = [] } = useCategories()
 
   const onSubmit = async (data: ExtendedProductFormData) => {
@@ -55,7 +51,6 @@ export default function AddProductPage() {
     setLoading(true)
    
     try {
-      // Vérifier que nous avons au moins une image uploadée
       if (!data.imageUrls || data.imageUrls.length === 0) {
         console.error('Aucune image fournie');
         throw new Error('Au moins une image est requise pour le produit');
@@ -63,23 +58,24 @@ export default function AddProductPage() {
 
       console.log('Images URLs:', data.imageUrls);
 
-      // Préparer les données du produit avec les champs du formulaire
- const productData: CreateProductData = {
-  name: data.name,
-  description: data.description,
-  price: data.price,
-  categoryId: data.categoryId,
-  subcategoryId: data.subcategoryId, // ✅ Plus d'erreur
-  stock: data.stock,
-  available: data.available,
-  images: data.imageUrls,
-  sku: generateSKU(data.name),
-  variants: data.variants.map(v => ({ // ✅ Plus d'erreur
-    size: v.size,
-    color: v.color,
-    quantity: v.quantity
-  }))
-}
+      const finalCategoryId = data.subcategoryId || data.categoryId;
+
+      const productData: CreateProductData = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        categoryId: finalCategoryId,
+        stock: data.stock,
+        available: data.available,
+        images: data.imageUrls,
+        sku: generateSKU(data.name),
+        variants: data.variants.map(v => ({
+          size: v.size,
+          color: v.color,
+          quantity: v.quantity
+        }))
+      }
+      
       console.log('Données envoyées à l\'API:', productData);
       
       const newProduct = await createProduct(productData)
@@ -101,7 +97,6 @@ export default function AddProductPage() {
         updatedAt: new Date(newProduct.updatedAt),
       }
        
-      // Mise à jour du cache React Query
       queryClient.setQueryData<Product[]>(['products'], (old = []) => [
         ...old,
         formattedProduct,
@@ -129,7 +124,6 @@ export default function AddProductPage() {
           title='Gestion des produits'
         />
        
-        {/* Main container with dark theme support */}
         <div className={`
           rounded-lg p-6 shadow-sm transition-all duration-300
           ${isDarkMode

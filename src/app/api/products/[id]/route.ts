@@ -4,7 +4,6 @@ import prisma from '@/lib/client'
 import { NextRequest, NextResponse } from 'next/server'
 import { z, ZodError } from 'zod'
 
-// ✅ Schéma de validation pour l'update
 const apiProductUpdateSchema = z.object({
   id: z.string(),
   name: z.string().min(3).optional(),
@@ -12,7 +11,7 @@ const apiProductUpdateSchema = z.object({
   price: z.number().positive().optional(),
   images: z.array(z.string()).optional(),
   categoryId: z.string().optional(),
-  subcategoryId: z.string().optional(),
+  subcategoryId: z.string().optional(), // On le reçoit mais on ne l'enregistre pas directement
   stock: z.number().int().min(0).optional(),
   available: z.boolean().optional(),
   variants: z
@@ -26,7 +25,6 @@ const apiProductUpdateSchema = z.object({
     .optional(),
 })
 
-// ✅ Utilitaire pour générer un slug
 function generateSlug(text: string): string {
   return text
     .toLowerCase()
@@ -36,7 +34,6 @@ function generateSlug(text: string): string {
     .replace(/-+/g, '-')
 }
 
-// ✅ Utilitaire pour générer un SKU de variante
 function generateVariantSKU(productSKU: string, size?: string | null, color?: string | null): string {
   const parts = [productSKU]
   if (size) parts.push(size.toUpperCase())
@@ -44,7 +41,6 @@ function generateVariantSKU(productSKU: string, size?: string | null, color?: st
   return parts.join('-')
 }
 
-// ✅ Utilitaire pour obtenir le code hex d'une couleur
 function getColorHex(color: string): string {
   const colorMap: Record<string, string> = {
     red: '#ef4444',
@@ -61,7 +57,6 @@ function getColorHex(color: string): string {
   return colorMap[color.toLowerCase()] || '#000000'
 }
 
-// ✅ GET - Récupérer un produit par ID
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -138,12 +133,10 @@ export async function GET(
       )
     }
 
-    // Calculer les statistiques
     const totalStock = product.variants.reduce((sum: number, v) => sum + v.stock, 0)
     const availableSizes = [...new Set(product.variants.map((v) => v.size).filter(Boolean))]
     const availableColors = [...new Set(product.variants.map((v) => v.color).filter(Boolean))]
     
-    // Calculer la note moyenne
     const avgRating = product.reviews.length > 0
       ? product.reviews.reduce((sum: number, r) => sum + r.rating, 0) / product.reviews.length
       : 0
@@ -174,7 +167,6 @@ export async function GET(
   }
 }
 
-// ✅ PUT - Mettre à jour un produit
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -186,7 +178,6 @@ export async function PUT(
 
     console.log('Données de mise à jour validées:', validatedData)
 
-    // ✅ Vérifier que le produit existe
     const existingProduct = await prisma.product.findUnique({
       where: { id },
       include: { variants: true }
@@ -199,10 +190,14 @@ export async function PUT(
       )
     }
 
-    // ✅ Si categoryId est fourni, vérifier qu'elle existe
-    if (validatedData.categoryId) {
+    // ✅ Déterminer le categoryId final (subcategoryId ou categoryId)
+    // subcategoryId est une sous-catégorie qu'on doit enregistrer comme categoryId
+    const finalCategoryId = validatedData.subcategoryId || validatedData.categoryId
+
+    // ✅ Vérifier que la catégorie finale existe
+    if (finalCategoryId) {
       const categoryExists = await prisma.category.findUnique({
-        where: { id: validatedData.categoryId }
+        where: { id: finalCategoryId }
       })
 
       if (!categoryExists) {
@@ -213,38 +208,19 @@ export async function PUT(
       }
     }
 
-    // ✅ Si subcategoryId est fourni, vérifier qu'elle existe
-    if (validatedData.subcategoryId) {
-      const subcategoryExists = await prisma.category.findUnique({
-        where: { id: validatedData.subcategoryId }
-      })
-
-      if (!subcategoryExists) {
-        return NextResponse.json(
-          { error: 'Sous-catégorie non trouvée' },
-          { status: 400 }
-        )
-      }
-    }
-
-    // ✅ Générer un nouveau slug si le nom change
     const newSlug = validatedData.name ? generateSlug(validatedData.name) : undefined
 
-    // ✅ Préparer les données de mise à jour
+    // ✅ Préparer les données de mise à jour (sans subcategoryId qui n'existe pas)
     const updateData: Prisma.ProductUpdateInput = {
       ...(validatedData.name && { name: validatedData.name }),
       ...(validatedData.description && { description: validatedData.description }),
       ...(validatedData.price !== undefined && { price: validatedData.price }),
       ...(validatedData.images && { images: validatedData.images }),
-      // ✅ Utiliser la relation Prisma au lieu de categoryId direct
-      ...(validatedData.categoryId && { 
+      // ✅ Utiliser finalCategoryId (qui peut être la subcategoryId ou categoryId)
+      ...(finalCategoryId && { 
         category: { 
-          connect: { id: validatedData.categoryId } 
+          connect: { id: finalCategoryId } 
         } 
-      }),
-      // ✅ Si subcategoryId est un champ scalaire (String?) dans votre schéma
-      ...(validatedData.subcategoryId !== undefined && { 
-        subcategoryId: validatedData.subcategoryId || null 
       }),
       ...(validatedData.stock !== undefined && { stock: validatedData.stock }),
       ...(validatedData.available !== undefined && { available: validatedData.available }),
@@ -252,14 +228,12 @@ export async function PUT(
       updatedAt: new Date(),
     }
 
-    // ✅ Gérer les variantes si elles sont fournies
+    // ✅ Gérer les variantes
     if (validatedData.variants && validatedData.variants.length > 0) {
-      // Supprimer les anciennes variantes
       await prisma.productVariant.deleteMany({
         where: { productId: id }
       })
 
-      // Créer les nouvelles variantes
       updateData.variants = {
         create: validatedData.variants.map((variant: { size: string; color: string; quantity: number }) => {
           const variantSku = generateVariantSKU(
@@ -282,7 +256,6 @@ export async function PUT(
       }
     }
 
-    // ✅ Mettre à jour le produit
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: updateData,
@@ -322,7 +295,6 @@ export async function PUT(
   }
 }
 
-// ✅ DELETE - Supprimer un produit
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -330,7 +302,6 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    // ✅ Vérifier que le produit existe
     const existingProduct = await prisma.product.findUnique({
       where: { id }
     })
@@ -342,7 +313,6 @@ export async function DELETE(
       )
     }
 
-    // ✅ Supprimer le produit (les variantes seront supprimées en cascade)
     await prisma.product.delete({
       where: { id }
     })
