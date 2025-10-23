@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "seed": "ts-node -P tsconfig.seed.json scripts/seed.ts",
+    "prisma:generate": "prisma generate",
     "build": "pnpm prisma:generate && next build",
     "start": "next start",
     "lint": "next lint"
