@@ -6,8 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { getOrders } from '@/services/order.service';
 import { useOrderStore } from '@/store/orderStore';
-import { OrderStatus, PaymentStatus } from '@/types/order.type';
-
+import { OrderStatus, PaymentStatus } from '@/generated/prisma';
 interface UseOrdersOptions {
   clientId?: string;
   status?: OrderStatus;

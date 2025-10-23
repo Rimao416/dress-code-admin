@@ -2,12 +2,6 @@ import {
   Home,
   MessageSquare,
   Mail,
-  Layout,
-  Calendar,
-  CheckSquare,
-  Folder,
-  Key,
-  Wrench,
 } from "lucide-react";
 import { MenuItem } from "@/types/dashboard.type";
 

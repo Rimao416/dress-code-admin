@@ -2,9 +2,9 @@
 // store/orderStore.ts
 // =============================================
 
+import { OrderStatus, PaymentStatus } from '@/generated/prisma';
 import { create } from 'zustand';
-import { Order, OrderStatus, PaymentStatus } from '@/types/order.type';
-
+import { Order } from '@/types/order.type';
 interface OrderState {
   orders: Order[];
   selectedOrder: Order | null;
@@ -89,7 +89,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const lowerQuery = query.toLowerCase();
     return orders.filter(order =>
       order.orderNumber.toLowerCase().includes(lowerQuery) ||
-      order.client?.email?.toLowerCase().includes(lowerQuery) ||
+      order.client?.user?.email?.toLowerCase().includes(lowerQuery) ||
       order.client?.firstName?.toLowerCase().includes(lowerQuery) ||
       order.client?.lastName?.toLowerCase().includes(lowerQuery)
     );
@@ -109,7 +109,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   getTotalRevenue: () => {
     const { orders } = get();
     return orders
-      .filter(order => order.paymentStatus === PaymentStatus.PAID)
+      .filter(order => order.paymentStatus === PaymentStatus.COMPLETED)
       .reduce((total, order) => total + order.totalAmount, 0);
   },
 }));

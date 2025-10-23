@@ -1,9 +1,9 @@
 // app/api/brands/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@/generated/prisma';
-import { apiBrandSchema } from '@/schemas/brandSchema';
 import { ZodError } from 'zod';
 import prisma from '@/lib/client';
+import { brandSchema } from '@/schemas/brandSchema';
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validatedData = apiBrandSchema.parse(body);
+    const validatedData = brandSchema.parse(body);
 
     console.log('Données validées:', validatedData);
 

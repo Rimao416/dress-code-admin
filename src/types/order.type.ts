@@ -1,27 +1,8 @@
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  PROCESSING = 'PROCESSING',
-  SHIPPED = 'SHIPPED',
-  DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED',
-  REFUNDED = 'REFUNDED',
-}
+// types/order.type.ts
 
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PAID = 'PAID',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-}
+export { OrderStatus, PaymentStatus, PaymentMethod } from '@/generated/prisma';
 
-export enum PaymentMethod {
-  CREDIT_CARD = 'CREDIT_CARD',
-  DEBIT_CARD = 'DEBIT_CARD',
-  PAYPAL = 'PAYPAL',
-  BANK_TRANSFER = 'BANK_TRANSFER',
-  CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
-}
+import { OrderStatus, PaymentStatus, PaymentMethod } from '@/generated/prisma';
 
 export type Address = {
   id: string;
@@ -37,6 +18,7 @@ export type Client = {
   id: string;
   firstName: string;
   lastName: string;
+  
   phone?: string | null;
   user?: {
     email: string;
@@ -78,6 +60,7 @@ export type OrderTracking = {
 };
 
 export type OrderBase = {
+  id: string;
   orderNumber: string;
   clientId: string;
   status: OrderStatus;
@@ -91,12 +74,12 @@ export type OrderBase = {
   paymentStatus: PaymentStatus;
   paymentMethod?: PaymentMethod | null;
   notes?: string | null;
-};
-
-export type Order = OrderBase & {
-  id: string;
   createdAt: string | Date;
   updatedAt: string | Date;
+};
+
+// Type pour une commande avec toutes les relations
+export type Order = OrderBase & {
   client?: Client;
   shippingAddress?: Address;
   billingAddress?: Address;
@@ -124,6 +107,22 @@ export type OrderFormData = {
   }[];
   shippingAddressId: string;
   billingAddressId: string;
-  paymentMethod: PaymentMethod;
+  paymentMethod?: PaymentMethod;
+  shippingCost?: number;
+  taxAmount?: number;
+  discountAmount?: number;
+  notes?: string | null;
+};
+
+export type CreateOrderData = OrderFormData;
+
+export type UpdateOrderData = {
+  id: string;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: PaymentMethod;
+  shippingCost?: number;
+  taxAmount?: number;
+  discountAmount?: number;
   notes?: string | null;
 };

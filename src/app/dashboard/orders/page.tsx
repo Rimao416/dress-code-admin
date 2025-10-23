@@ -1,7 +1,8 @@
 'use client';
 
 import { ManagementPageConfig } from "@/types/management.type";
-import { Order, OrderStatus, PaymentStatus } from "@/types/order.type";
+import { Order } from "@/types/order.type";
+
 import { Eye, Pencil, Trash2, Package, DollarSign } from 'lucide-react';
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import ActionModal from "@/components/common/ActionModal";
 import { useDeleteOrder } from "@/hooks/orders/useDeleteOrder";
 import OrderStatusModal from "@/components/common/OrderStatusModal";
 import { useUpdateOrderStatus } from "@/hooks/orders/useUpdateOrderStatus";
+import { OrderStatus, PaymentStatus } from "@/generated/prisma";
 
 const statusColors: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
@@ -179,7 +181,7 @@ export default function OrdersPage() {
               <span className="font-medium">
                 {client?.firstName} {client?.lastName}
               </span>
-              <span className="text-sm text-gray-500">{client?.email}</span>
+              <span className="text-sm text-gray-500">{client?.user?.email}</span>
             </div>
           );
         },

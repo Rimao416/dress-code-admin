@@ -1,11 +1,12 @@
 // types/brand.type.ts
+import { BrandFormData } from '@/schemas/brandSchema' // ✅ Importez depuis le schéma
 
 export type BrandBase = {
   name: string;
   description?: string | null;
   logo?: string | null;
   website?: string | null;
-  isActive?: boolean;
+  isActive: boolean; // ✅ Retirez le ? pour le rendre requis
 };
 
 export type Brand = BrandBase & {
@@ -17,7 +18,8 @@ export type Brand = BrandBase & {
   };
 };
 
-export type BrandFormData = BrandBase;
+// ✅ Supprimez cette ligne (utilisez l'import à la place)
+// export type BrandFormData = BrandBase;
 
 export type CreateBrandData = BrandBase;
 

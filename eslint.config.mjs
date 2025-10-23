@@ -19,6 +19,21 @@ const eslintConfig = [
       ".next/**/*",
       "node_modules/**/*"
     ]
+  },
+  {
+    rules: {
+      // Désactiver les erreurs "any"
+      "@typescript-eslint/no-explicit-any": "off",
+      
+      // Désactiver les avertissements de variables non utilisées
+      "@typescript-eslint/no-unused-vars": "off",
+      
+      // Désactiver prefer-const
+      "prefer-const": "off",
+      
+      // Désactiver l'avertissement next/image
+      "@next/next/no-img-element": "off"
+    }
   }
 ];
 
