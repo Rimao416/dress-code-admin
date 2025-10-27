@@ -25,22 +25,23 @@ export default function BrandForm({
     initialData?.logo || null
   )
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useForm<BrandFormData>({
-    resolver: zodResolver(brandSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      description: initialData?.description || '',
-      logo: initialData?.logo || '',
-      website: initialData?.website || '',
-      isActive: initialData?.isActive ?? true,
-    },
-  })
+const {
+  register,
+  handleSubmit,
+  formState: { errors },
+  setValue,
+  watch,
+} = useForm<BrandFormData>({
+  resolver: zodResolver(brandSchema),
+  defaultValues: {
+    name: initialData?.name || '',
+    description: initialData?.description ?? '',
+    logo: initialData?.logo ?? '',
+    website: initialData?.website ?? '',
+    isActive: initialData?.isActive ?? true,
+  },
+});
+
 
   const logo = watch('logo')
 

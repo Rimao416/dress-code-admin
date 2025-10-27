@@ -65,6 +65,7 @@ export default function AddProductPage() {
         description: data.description,
         price: data.price,
         categoryId: finalCategoryId,
+        brandId: data.brandId,
         stock: data.stock,
         available: data.available,
         images: data.imageUrls,

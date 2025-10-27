@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         // Champs optionnels avec valeurs par défaut
         shortDescription: null,
         comparePrice: null,
-        brandId: null,
+        brandId: validatedData.brandId || null,
         featured: false,
         isNewIn: false,
         tags: [],

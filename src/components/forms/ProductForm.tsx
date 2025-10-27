@@ -5,6 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Product } from '@/types/product.type'
 import { Category } from '@/types/category.type'
+import { useBrands } from '@/hooks/brands/useBrands'
 import { useTheme } from '@/context/ThemeContext'
 import { ChevronLeft, ChevronRight, Upload, X, Plus, Check, Loader2 } from 'lucide-react'
 import FormField from '../ui/formfield'
@@ -14,6 +15,7 @@ import Button from '../ui/button'
 import { productSchema, ProductFormData } from '@/schemas/productSchema'
 import { CloudinaryService } from '@/services/cloudinary.service'
 import Image from 'next/image'
+
 
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>;
@@ -67,6 +69,7 @@ export default function ProductForm({
   const [imageStates, setImageStates] = useState<ImageUploadState[]>([]);
   const [variants, setVariants] = useState([{ size: '', color: '', quantity: 0 }]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const { data: brands = [] } = useBrands({ isActive: true })
 
   const {
     register,
@@ -86,6 +89,7 @@ export default function ProductForm({
   });
 
   const watchedCategoryId = watch('categoryId');
+  const watchedBrandId = watch('brandId')
   const watchedSubcategoryId = watch('subcategoryId');
   const watchedValues = watch();
 
@@ -106,6 +110,7 @@ export default function ProductForm({
     setValue('categoryId', initialData.categoryId);
     setValue('stock', typeof initialData.stock === 'number' ? initialData.stock : 0);
     setValue('available', typeof initialData.available === 'boolean' ? initialData.available : true);
+   setValue('brandId', initialData.brandId ?? undefined);
    
     if (Array.isArray(initialData.variants) && initialData.variants.length > 0) {
       const mappedVariants = initialData.variants
@@ -563,6 +568,20 @@ export default function ProductForm({
           </FormField>
         </div>
       )}
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+  <FormField
+    label="Marque"
+    htmlFor="brandId"
+    error={errors.brandId?.message}
+  >
+    <Select
+      options={brands.map(brand => ({ value: brand.id, label: brand.name }))}
+      value={watchedBrandId || ''}
+      onValueChange={(value) => setValue('brandId', value)}
+      placeholder="Sélectionnez une marque (optionnel)"
+    />
+  </FormField>
+</div>
     </div>
   );
 
@@ -759,6 +778,14 @@ export default function ProductForm({
                   </span>
                 </div>
               )}
+              {watchedValues.brandId && (
+  <div className={`py-2 px-3 rounded ${isDarkMode ? 'bg-slate-700/50' : 'bg-white'}`}>
+    <strong>Marque:</strong><br />
+    <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>
+      {brands.find(b => b.id === watchedValues.brandId)?.name}
+    </span>
+  </div>
+)}
             </div>
           </div>
         </div>

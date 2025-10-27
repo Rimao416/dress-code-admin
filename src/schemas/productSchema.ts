@@ -27,6 +27,7 @@ export const productSchema = z.object({
   subcategoryId: z.string().optional(), // ✅ Ajouté ici
   variants: z.array(variantSchema).min(1, 'Au moins une variante est requise'),
   stock: z.number().min(0, 'Le stock ne peut pas être négatif'),
+  brandId: z.string().optional(),
   available: z.boolean(),
 });
 
@@ -51,6 +52,7 @@ export const apiProductSchema = z.object({
   subcategoryId: z.string().optional(),
   variants: z.array(variantSchema).min(1, 'Au moins une variante est requise'),
   stock: z.number().min(0, 'Le stock ne peut pas être négatif'),
+  brandId: z.string().optional(),
   available: z.boolean(),
 });
 
