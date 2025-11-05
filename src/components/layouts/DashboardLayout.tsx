@@ -143,8 +143,6 @@ const searchVariants = {
                   {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
                 </motion.div>
               </motion.button>
-
-           
             </div>
           </div>
         </motion.header>

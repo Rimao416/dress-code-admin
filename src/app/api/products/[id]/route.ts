@@ -214,6 +214,7 @@ export async function PUT(
     const updateData: Prisma.ProductUpdateInput = {
       ...(validatedData.name && { name: validatedData.name }),
       ...(validatedData.description && { description: validatedData.description }),
+    
       ...(validatedData.price !== undefined && { price: validatedData.price }),
       ...(validatedData.images && { images: validatedData.images }),
       // ✅ Utiliser finalCategoryId (qui peut être la subcategoryId ou categoryId)

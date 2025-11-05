@@ -1,8 +1,6 @@
 // lib/client.ts
 import { PrismaClient } from "@/generated/prisma"
 
-// import { withAccelerate } from '@prisma/extension-accelerate'
-
 const globalForPrisma = global as unknown as { 
   prisma: PrismaClient | undefined
 }
@@ -16,11 +14,13 @@ const prisma = globalForPrisma.prisma || new PrismaClient({
   errorFormat: 'pretty',
 })
 
-// ✅ Gestion propre de la déconnexion
+// ✅ Gestion propre de la déconnexion (UNIQUEMENT côté serveur)
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
-  
-  // ✅ Déconnexion propre lors de l'arrêt du processus
+}
+
+// ✅ Ne s'exécute QUE côté serveur Node.js (pas Edge Runtime)
+if (typeof window === 'undefined' && typeof process.on === 'function') {
   process.on('beforeExit', async () => {
     await prisma.$disconnect()
   })
