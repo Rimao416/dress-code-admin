@@ -17,6 +17,16 @@
   --color-primary-700: hsl(217, 91%, 30%);
   --color-primary-800: hsl(217, 91%, 20%);
   --color-primary-900: hsl(217, 91%, 10%);
+    --color-brand-50: hsl(217, 91%, 95%);
+  --color-brand-100: hsl(217, 91%, 90%);
+  --color-brand-200: hsl(217, 91%, 80%);
+  --color-brand-300: hsl(217, 91%, 70%);
+  --color-brand-400: hsl(217, 91%, 60%);
+  --color-brand-500: hsl(217, 91%, 50%);
+  --color-brand-600: hsl(217, 91%, 40%);
+  --color-brand-700: hsl(217, 91%, 30%);
+  --color-brand-800: hsl(217, 91%, 20%);
+  --color-brand-900: hsl(217, 91%, 10%);
 
   /* Variables pour les thèmes sombres/clairs */
   --color-background: hsl(0, 0%, 100%);
