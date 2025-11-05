@@ -139,7 +139,7 @@ export default function LoginPage() {
                   <p className={`text-lg ${
                     isDarkMode ? 'text-slate-300' : 'text-gray-600'
                   }`}>
-                    Connectez-vous pour accéder à vos commandes, vos favoris et profiter d'une expérience personnalisée.
+                    Connectez-vous pour accéder à vos commandes, vos favoris et profiter d&apos;une expérience personnalisée.
                   </p>
                 </div>
 
@@ -246,8 +246,6 @@ export default function LoginPage() {
                     </div>
                   </FormField>
 
-                 
-
                   <Button
                     variant="primary"
                     loading={isSubmitting}
@@ -257,8 +255,6 @@ export default function LoginPage() {
                     {isSubmitting ? 'Connexion en cours...' : 'Se connecter'}
                   </Button>
                 </div>
-
-              
               </div>
             </div>
           </div>

@@ -1,11 +1,11 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { compare } from "bcryptjs";
-loginSchema
 import { z } from "zod";
-import prisma from '@/lib/client'
+import prisma from '@/lib/client';
 import { getSession, updateSessionWithUser } from "@/lib/auth/session";
 import { loginSchema } from "@/schemas/authSchema";
+import { Role } from "@/generated/prisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,7 +38,14 @@ export async function POST(request: NextRequest) {
         email: true,
         password: true,
         role: true,
+        isActive: true,
         createdAt: true,
+        admin: {
+          select: {
+            id: true,
+            permissions: true,
+          },
+        },
         client: {
           select: {
             firstName: true,
@@ -55,6 +62,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Email ou mot de passe incorrect" },
         { status: 401 }
+      );
+    }
+
+    // ✅ Vérifier que l'utilisateur est ADMIN
+    if (user.role !== Role.ADMIN) {
+      console.warn(`Tentative de connexion refusée - Utilisateur non admin: ${email}`);
+      return NextResponse.json(
+        { error: "Accès refusé. Seuls les administrateurs peuvent se connecter." },
+        { status: 403 }
+      );
+    }
+
+    // ✅ Vérifier que le compte admin est actif
+    if (!user.isActive) {
+      return NextResponse.json(
+        { error: "Votre compte a été désactivé. Contactez un administrateur." },
+        { status: 403 }
+      );
+    }
+
+    // ✅ Vérifier que l'enregistrement admin existe
+    if (!user.admin) {
+      console.error(`Utilisateur ADMIN sans enregistrement admin associé: ${user.id}`);
+      return NextResponse.json(
+        { error: "Configuration du compte administrateur incorrecte. Contactez le support." },
+        { status: 500 }
       );
     }
 
@@ -83,9 +116,11 @@ export async function POST(request: NextRequest) {
     // Préparer les données utilisateur (sans le mot de passe)
     const { password: _, ...userWithoutPassword } = user;
 
+    console.log(`✅ Connexion admin réussie: ${email} (ID: ${user.id})`);
+
     return NextResponse.json(
       {
-        message: "Connexion réussie ! Bienvenue de retour.",
+        message: "Connexion réussie ! Bienvenue dans l'espace administrateur.",
         user: userWithoutPassword,
         sessionCreated: sessionUpdated,
       },
@@ -123,10 +158,6 @@ function getCustomErrorMessage(issue: z.ZodIssue): string {
       if (path === 'email') return 'L\'adresse email est requise';
       if (path === 'password') return 'Le mot de passe est requis';
       return `Le champ ${path} est requis`;
-     
-    case 'invalid_format':
-      if (path === 'email') return 'Format d\'email invalide';
-      return `Format invalide pour ${path}`;
      
     case 'custom':
       return issue.message;

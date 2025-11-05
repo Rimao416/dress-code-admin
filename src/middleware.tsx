@@ -25,6 +25,8 @@ const publicRoutes = [
 // Routes protégées nécessitant le rôle ADMIN
 const adminOnlyRoutes = [
   { path: '/dashboard', roles: [Role.ADMIN] },
+  { path: '/', roles: [Role.ADMIN] },
+
   { path: '/api', roles: [Role.ADMIN] }, // Toutes les routes API sauf auth
 ]
 
