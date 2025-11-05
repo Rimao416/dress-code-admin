@@ -125,16 +125,15 @@ export async function POST(request: NextRequest) {
         stock: validatedData.stock || 0,
         available: validatedData.available !== false,
         // Champs optionnels avec valeurs par défaut
-        shortDescription: null,
-        comparePrice: null,
-        brandId: validatedData.brandId || null,
-        featured: false,
-        isNewIn: false,
-        tags: [],
-        metaTitle: null,
-        metaDescription: null,
-        weight: null,
-        dimensions: Prisma.JsonNull,
+       shortDescription: validatedData.shortDescription || null,
+comparePrice: validatedData.comparePrice || null,
+featured: validatedData.featured ?? false,
+isNewIn: validatedData.isNewIn ?? false,
+tags: validatedData.tags || [],
+metaTitle: validatedData.metaTitle || null,
+metaDescription: validatedData.metaDescription || null,
+weight: validatedData.weight || null,
+dimensions: validatedData.dimensions ? validatedData.dimensions : Prisma.JsonNull,
         // ✅ Créer les variantes si elles existent
         variants: validatedData.variants && validatedData.variants.length > 0
           ? {

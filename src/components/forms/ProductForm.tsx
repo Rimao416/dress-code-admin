@@ -29,7 +29,8 @@ const STEPS = [
   { id: 1, title: 'Informations générales', description: 'Détails de base du produit' },
   { id: 2, title: 'Catégorisation', description: 'Classification du produit' },
   { id: 3, title: 'Déclinaisons', description: 'Variantes disponibles' },
-  { id: 4, title: 'Résumé', description: 'Vérification finale' }
+  { id: 4, title: 'Options avancées', description: 'SEO et paramètres' }, // ✅ MODIFIER
+  { id: 5, title: 'Résumé', description: 'Vérification finale' } // ✅ AJOUTER
 ];
 
 const COLORS = [
@@ -70,6 +71,7 @@ export default function ProductForm({
   const [variants, setVariants] = useState([{ size: '', color: '', quantity: 0 }]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const { data: brands = [] } = useBrands({ isActive: true })
+    const [tagInput, setTagInput] = useState('');
 
   const {
     register,
@@ -82,10 +84,20 @@ export default function ProductForm({
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      variants: [{ size: '', color: '', quantity: 0 }],
-      available: true,
-      stock: 0
-    }
+  variants: [{ size: '', color: '', quantity: 0 }],
+  available: true,
+  stock: 0,
+  // ✅ AJOUTER ICI
+  featured: false,
+  isNewIn: false,
+  tags: [],
+  shortDescription: '',
+  comparePrice: null,
+  metaTitle: null,
+  metaDescription: null,
+  weight: null,
+  dimensions: null,
+}
   });
 
   const watchedCategoryId = watch('categoryId');
@@ -111,6 +123,15 @@ export default function ProductForm({
     setValue('stock', typeof initialData.stock === 'number' ? initialData.stock : 0);
     setValue('available', typeof initialData.available === 'boolean' ? initialData.available : true);
    setValue('brandId', initialData.brandId ?? undefined);
+   setValue('shortDescription', initialData.shortDescription || '');
+setValue('comparePrice', initialData.comparePrice ?? null);
+setValue('featured', initialData.featured ?? false);
+setValue('isNewIn', initialData.isNewIn ?? false);
+setValue('tags', initialData.tags || []);
+setValue('metaTitle', initialData.metaTitle || null);
+setValue('metaDescription', initialData.metaDescription || null);
+setValue('weight', initialData.weight ?? null);
+setValue('dimensions', initialData.dimensions ?? null);
    
     if (Array.isArray(initialData.variants) && initialData.variants.length > 0) {
       const mappedVariants = initialData.variants
@@ -308,31 +329,31 @@ export default function ProductForm({
     return true;
   };
 
-  const nextStep = async () => {
-    let fieldsToValidate: (keyof ProductFormData)[] = [];
-   
-    switch (currentStep) {
-      case 1:
-        fieldsToValidate = ['name', 'description', 'price'];
-        break;
-      case 2:
-        fieldsToValidate = ['categoryId'];
-        break;
-      case 3:
-        fieldsToValidate = ['variants'];
-        break;
-    }
-    
-    const isValid = await trigger(fieldsToValidate);
-    const canProceed = canProceedToNextStep();
-   
-    if (isValid && canProceed && currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    } else if (!canProceed) {
-      alert('Veuillez sélectionner au moins une image');
-    }
-  };
-
+const nextStep = async () => {
+  let fieldsToValidate: (keyof ProductFormData)[] = [];
+ 
+  switch (currentStep) {
+    case 1:
+      fieldsToValidate = ['name', 'description', 'price'];
+      break;
+    case 2:
+      fieldsToValidate = ['categoryId'];
+      break;
+    case 3:
+      fieldsToValidate = ['variants'];
+      break;
+    // Pas de validation obligatoire pour l'étape 4
+  }
+ 
+  const isValid = await trigger(fieldsToValidate);
+  const canProceed = canProceedToNextStep();
+ 
+  if (isValid && canProceed && currentStep < 5) { // ✅ CHANGER ICI
+    setCurrentStep(currentStep + 1);
+  } else if (!canProceed) {
+    alert('Veuillez sélectionner au moins une image');
+  }
+};
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -514,23 +535,52 @@ export default function ProductForm({
           />
         </FormField>
       </div>
-
       <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-        <FormField
-          label="Prix (€)"
-          htmlFor="price"
-          error={errors.price?.message}
-          required
-        >
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            {...register('price', { valueAsNumber: true })}
-          />
-        </FormField>
-      </div>
+  <FormField
+    label="Description courte (optionnelle)"
+    htmlFor="shortDescription"
+    error={errors.shortDescription?.message}
+  >
+    <Input
+      id="shortDescription"
+      placeholder="Résumé court pour les listings"
+      {...register('shortDescription')}
+    />
+  </FormField>
+</div>
+
+<div className={`border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+  <FormField
+    label="Prix (€)"
+    htmlFor="price"
+    error={errors.price?.message}
+    required
+  >
+    <Input
+      id="price"
+      type="number"
+      step="0.01"
+      placeholder="0.00"
+      {...register('price', { valueAsNumber: true })}
+    />
+  </FormField>
+  
+  <FormField
+    label="Prix barré (€)"
+    htmlFor="comparePrice"
+    error={errors.comparePrice?.message}
+  >
+    <Input
+      id="comparePrice"
+      type="number"
+      step="0.01"
+      placeholder="0.00"
+      {...register('comparePrice', { 
+        setValueAs: (v) => v === '' ? null : parseFloat(v) 
+      })}
+    />
+  </FormField>
+</div>
 
       {renderImageUploadSection()}
     </div>
@@ -724,8 +774,157 @@ export default function ProductForm({
       </div>
     </div>
   );
+const renderStep4 = () => {
 
-  const renderStep4 = () => (
+  const currentTags = watch('tags') || [];
+
+  const addTag = () => {
+    if (tagInput.trim() && !currentTags.includes(tagInput.trim())) {
+      setValue('tags', [...currentTags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setValue('tags', currentTags.filter(tag => tag !== tagToRemove));
+  };
+
+  return (
+    <div className="space-y-6">
+      <h4 className={`text-lg font-semibold pb-4 border-b ${isDarkMode ? 'text-white border-slate-700' : 'text-slate-800 border-slate-200'}`}>
+        Options avancées
+      </h4>
+
+      {/* Paramètres de visibilité */}
+      <div className={`p-4 border rounded-lg space-y-3 ${isDarkMode ? 'border-slate-600 bg-slate-800/30' : 'border-slate-200 bg-slate-50'}`}>
+        <h5 className={`font-medium ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Paramètres de visibilité</h5>
+        
+        <div className="flex items-center space-x-3">
+          <input
+            id="featured"
+            type="checkbox"
+            {...register('featured')}
+            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          />
+          <label htmlFor="featured" className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            Produit en vedette
+          </label>
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <input
+            id="isNewIn"
+            type="checkbox"
+            {...register('isNewIn')}
+            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          />
+          <label htmlFor="isNewIn" className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+            Nouveau produit
+          </label>
+        </div>
+      </div>
+
+      {/* Tags */}
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <FormField label="Tags" htmlFor="tags">
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                placeholder="Ajouter un tag"
+              />
+              <Button type="button" onClick={addTag} variant="outline">
+                <Plus size={16} />
+              </Button>
+            </div>
+            {currentTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {currentTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${
+                      isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {tag}
+                    <button type="button" onClick={() => removeTag(tag)}>
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </FormField>
+      </div>
+
+      {/* SEO */}
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <h5 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>SEO</h5>
+        <div className="space-y-4">
+          <FormField label="Titre SEO" htmlFor="metaTitle" error={errors.metaTitle?.message}>
+            <Input id="metaTitle" placeholder="60 caractères max" {...register('metaTitle')} />
+          </FormField>
+          <FormField label="Description SEO" htmlFor="metaDescription" error={errors.metaDescription?.message}>
+            <textarea
+              id="metaDescription"
+              rows={3}
+              placeholder="160 caractères max"
+              className={`w-full px-4 py-3 border rounded-xl ${
+                isDarkMode ? 'bg-slate-700/50 border-slate-600 text-white' : 'bg-slate-50 border-slate-200'
+              }`}
+              {...register('metaDescription')}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      {/* Dimensions */}
+      <div className={`border-t pt-6 ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
+        <h5 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>Dimensions et poids</h5>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <FormField label="Poids (kg)" htmlFor="weight">
+            <Input
+              id="weight"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              {...register('weight', { setValueAs: (v) => v === '' ? null : parseFloat(v) })}
+            />
+          </FormField>
+          <FormField label="Longueur (cm)" htmlFor="length">
+            <Input
+              id="length"
+              type="number"
+              step="0.01"
+              {...register('dimensions.length', { setValueAs: (v) => v === '' ? 0 : parseFloat(v) })}
+            />
+          </FormField>
+          <FormField label="Largeur (cm)" htmlFor="width">
+            <Input
+              id="width"
+              type="number"
+              step="0.01"
+              {...register('dimensions.width', { setValueAs: (v) => v === '' ? 0 : parseFloat(v) })}
+            />
+          </FormField>
+          <FormField label="Hauteur (cm)" htmlFor="height">
+            <Input
+              id="height"
+              type="number"
+              step="0.01"
+              {...register('dimensions.height', { setValueAs: (v) => v === '' ? 0 : parseFloat(v) })}
+            />
+          </FormField>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+  const renderStep5 = () => (
     <div className="space-y-6">
       <h4 className={`text-lg font-semibold mb-4 pb-4 border-b ${isDarkMode ? 'text-white border-slate-700' : 'text-slate-800 border-slate-200'}`}>
         Résumé du produit
@@ -788,6 +987,20 @@ export default function ProductForm({
 )}
             </div>
           </div>
+          {/* Options avancées */}
+<div className="p-6">
+  <h5 className={`font-medium mb-4 pb-2 border-b ${isDarkMode ? 'text-white border-slate-700' : 'text-slate-800 border-slate-200'}`}>
+    Options avancées
+  </h5>
+  <div className="space-y-2 text-sm">
+    <div><strong>En vedette:</strong> {watchedValues.featured ? 'Oui' : 'Non'}</div>
+    <div><strong>Nouveau:</strong> {watchedValues.isNewIn ? 'Oui' : 'Non'}</div>
+    {watchedValues.tags && watchedValues.tags.length > 0 && (
+      <div><strong>Tags:</strong> {watchedValues.tags.join(', ')}</div>
+    )}
+    {watchedValues.weight && <div><strong>Poids:</strong> {watchedValues.weight} kg</div>}
+  </div>
+</div>
         </div>
        
         <div className={`p-6 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
@@ -825,6 +1038,7 @@ export default function ProductForm({
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
        
         <div className={`flex justify-between pt-6 border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`}>
           <Button
@@ -837,7 +1051,7 @@ export default function ProductForm({
             Précédent
           </Button>
          
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <Button
               type="button"
               variant="primary"

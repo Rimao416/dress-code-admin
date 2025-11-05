@@ -60,22 +60,31 @@ export default function AddProductPage() {
 
       const finalCategoryId = data.subcategoryId || data.categoryId;
 
-      const productData: CreateProductData = {
-        name: data.name,
-        description: data.description,
-        price: data.price,
-        categoryId: finalCategoryId,
-        brandId: data.brandId,
-        stock: data.stock,
-        available: data.available,
-        images: data.imageUrls,
-        sku: generateSKU(data.name),
-        variants: data.variants.map(v => ({
-          size: v.size,
-          color: v.color,
-          quantity: v.quantity
-        }))
-      }
+const productData: CreateProductData = {
+  name: data.name,
+  description: data.description,
+  shortDescription: data.shortDescription,
+  price: data.price,
+  comparePrice: data.comparePrice,
+  categoryId: finalCategoryId,
+  brandId: data.brandId,
+  stock: data.stock,
+  available: data.available,
+  featured: data.featured,
+  isNewIn: data.isNewIn,
+  tags: data.tags,
+  metaTitle: data.metaTitle,
+  metaDescription: data.metaDescription,
+  weight: data.weight,
+  dimensions: data.dimensions,
+  images: data.imageUrls,
+  sku: generateSKU(data.name),
+  variants: data.variants.map(v => ({
+    size: v.size,
+    color: v.color,
+    quantity: v.quantity
+  }))
+}
       
       console.log('Données envoyées à l\'API:', productData);
       

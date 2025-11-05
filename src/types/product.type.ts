@@ -2,6 +2,13 @@
 // types/product.type.ts
 // =============================================
 
+// ✅ AJOUTER ce type au début du fichier
+export type ProductDimensions = {
+  length: number;
+  width: number;
+  height: number;
+};
+
 export type ProductBase = {
   name: string;
   description: string;
@@ -21,7 +28,7 @@ export type ProductBase = {
   metaTitle?: string | null;
   metaDescription?: string | null;
   weight?: number | null;
-  dimensions?: JSON | null;
+  dimensions?: ProductDimensions | null; // ✅ CHANGER ICI
 };
 
 // Nouveau type pour les variants du formulaire
@@ -96,7 +103,7 @@ export type Product = ProductBase & {
     favorites: number;
     cartItems: number;
   };
-  stats?: ProductStats; // ✅ Ajout du champ stats
+  stats?: ProductStats;
 };
 
 export type ProductFormData = ProductBase;
