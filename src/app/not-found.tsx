@@ -106,7 +106,7 @@ export default function NotFoundPage() {
                   <p className={`text-lg ${
                     isDarkMode ? 'text-slate-300' : 'text-gray-600'
                   }`}>
-                    Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+                    Désolé, la page que vous recherchez n&apos;existe pas ou a été déplacée.
                   </p>
                 </div>
 
@@ -123,9 +123,9 @@ export default function NotFoundPage() {
                   </h3>
                   <ul className="space-y-2">
                     {[
-                      'Vérifiez l\'URL pour les fautes de frappe',
+                      'Vérifiez l&apos;URL pour les fautes de frappe',
                       'Retournez à la page précédente',
-                      'Visitez notre page d\'accueil'
+                      'Visitez notre page d&apos;accueil'
                     ].map((suggestion, index) => (
                       <li
                         key={index}
@@ -148,7 +148,7 @@ export default function NotFoundPage() {
                     className="w-full"
                   >
                     <Home className="w-5 h-5 mr-2" />
-                    Retour à l'accueil
+                    Retour à l&apos;accueil
                   </Button>
 
                   <button
@@ -164,20 +164,6 @@ export default function NotFoundPage() {
                   </button>
                 </div>
 
-                {/* Info supplémentaire */}
-                <div className={`text-center text-sm ${
-                  isDarkMode ? 'text-slate-400' : 'text-gray-500'
-                }`}>
-                  <p>
-                    Besoin d'aide ?{' '}
-                    <a
-                      href="/contact"
-                      className="text-red-800 hover:text-red-700 font-medium underline underline-offset-2"
-                    >
-                      Contactez-nous
-                    </a>
-                  </p>
-                </div>
               </div>
             </div>
           </div>
