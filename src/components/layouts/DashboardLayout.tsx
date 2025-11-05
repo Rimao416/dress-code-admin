@@ -120,32 +120,6 @@ const searchVariants = {
               </motion.button>
             </div>
 
-            {/* Center Section - Search */}
-            <motion.div
-              variants={searchVariants}
-              initial="initial"
-              whileFocus="focus"
-              className="relative"
-            >
-              <div className="relative">
-                <Search
-                  size={20}
-                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}
-                />
-                <motion.input
-                  whileFocus={{ scale: 1.02 }}
-                  type="text"
-                  placeholder="Rechercher..."
-                  className={`pl-10 pr-4 py-2 w-full rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isDarkMode
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                  }`}
-                />
-              </div>
-            </motion.div>
 
             {/* Right Section */}
             <div className="flex items-center space-x-4">
@@ -170,102 +144,7 @@ const searchVariants = {
                 </motion.div>
               </motion.button>
 
-              {/* Notifications */}
-              <motion.button
-                variants={notificationVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-                className={`relative p-2 rounded-full transition-colors ${
-                  isDarkMode
-                    ? 'hover:bg-gray-700 text-gray-300'
-                    : 'hover:bg-gray-100 text-gray-600'
-                }`}
-              >
-                <Bell size={20} />
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"
-                />
-              </motion.button>
-
-              {/* Settings */}
-              <motion.button
-                variants={notificationVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-                className={`p-2 rounded-full transition-colors ${
-                  isDarkMode
-                    ? 'hover:bg-gray-700 text-gray-300'
-                    : 'hover:bg-gray-100 text-gray-600'
-                }`}
-              >
-                <motion.div
-                  whileHover={{ rotate: 90 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Settings size={20} />
-                </motion.div>
-              </motion.button>
-
-              {/* User Menu */}
-              <div className="relative">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className={`flex items-center space-x-2 p-2 rounded-full transition-colors ${
-                    isDarkMode
-                      ? 'hover:bg-gray-700'
-                      : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User size={16} className="text-white" />
-                  </div>
-                  <motion.div
-                    animate={{ rotate: showUserMenu ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown size={16} className={isDarkMode ? 'text-gray-300' : 'text-gray-600'} />
-                  </motion.div>
-                </motion.button>
-
-                {/* User Dropdown */}
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{
-                    opacity: showUserMenu ? 1 : 0,
-                    y: showUserMenu ? 0 : -10,
-                    scale: showUserMenu ? 1 : 0.95
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg ${
-                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                  } border ${showUserMenu ? 'pointer-events-auto' : 'pointer-events-none'}`}
-                >
-                  <div className="py-2">
-                    <a href="#" className={`block px-4 py-2 text-sm transition-colors ${
-                      isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                    }`}>
-                      Mon Profil
-                    </a>
-                    <a href="#" className={`block px-4 py-2 text-sm transition-colors ${
-                      isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'
-                    }`}>
-                      Paramètres
-                    </a>
-                    <hr className={`my-1 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} />
-                    <a href="#" className={`block px-4 py-2 text-sm transition-colors ${
-                      isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'
-                    }`}>
-                      Déconnexion
-                    </a>
-                  </div>
-                </motion.div>
-              </div>
+           
             </div>
           </div>
         </motion.header>
